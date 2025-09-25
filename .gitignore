@@ -249,4 +249,13 @@ dmypy.json
 # profiling data
 .prof
 
+# Node.js artifacts
+node_modules/
+**/node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+*.log
+client/dist/
+
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python
