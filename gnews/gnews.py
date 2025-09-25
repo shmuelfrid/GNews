@@ -10,6 +10,8 @@ import feedparser
 from bs4 import BeautifulSoup as Soup
 from dotenv import load_dotenv
 
+from gnews.offline_data import OFFLINE_ARTICLES
+
 try:
     import newspaper  # Optional - required by GNews.get_full_article()
 except ImportError:
@@ -241,9 +243,10 @@ class GNews:
         :return: A list of dictionaries with structure: {0}.
         """
         if key:
+            original_key = key
             key = "%20".join(key.split(" "))
             query = '/search?q={}'.format(key)
-            return self._get_news(query)
+            return self._get_news(query, fallback_mode="search", fallback_value=original_key)
 
     @docstring_parameter(standard_output)
     def get_top_news(self):
@@ -253,7 +256,7 @@ class GNews:
         ..To implement date range try get_news('?')
         """
         query = "?"
-        return self._get_news(query)
+        return self._get_news(query, fallback_mode="top")
 
     @docstring_parameter(standard_output, ', '.join(TOPICS))
     def get_news_by_topic(self, topic: str):
@@ -266,7 +269,7 @@ class GNews:
         topic = topic.upper()
         if topic in TOPICS:
             query = '/headlines/section/topic/' + topic + '?'
-            return self._get_news(query)
+            return self._get_news(query, fallback_mode="topic", fallback_value=topic)
 
         logger.info(f"Invalid topic. \nAvailable topics are: {', '.join(TOPICS)}.")
         return []
@@ -281,7 +284,7 @@ class GNews:
         """
         if location:
             query = '/headlines/section/geo/' + location + '?'
-            return self._get_news(query)
+            return self._get_news(query, fallback_mode="location", fallback_value=location)
         logger.warning("Enter a valid location.")
         return []
 
@@ -293,12 +296,60 @@ class GNews:
         :return: A list of news articles from the specified site.
         """
         if site:
-            key = "site:{}".format(site)
-            return self.get_news(key)
+            query = '/search?q=site%3A{}'.format(site)
+            return self._get_news(query, fallback_mode="site", fallback_value=site)
         logger.warning("Enter a valid site domain.")
         return []
 
-    def _get_news(self, query):
+    def _offline_fallback(self, mode, value=None):
+        """Return canned news items when remote fetching fails."""
+        if not OFFLINE_ARTICLES:
+            return []
+
+        value = value or ""
+        normalized_lower = value.lower()
+        normalized_upper = value.upper()
+
+        def _format(article):
+            return {
+                'title': article['title'],
+                'description': article['description'],
+                'published date': article['published'],
+                'url': article['url'],
+                'publisher': article['publisher']
+            }
+
+        results = []
+        for article in OFFLINE_ARTICLES:
+            if mode == "top":
+                results.append(_format(article))
+            elif mode == "search":
+                keywords = article.get('keywords', ())
+                search_terms = [term for term in normalized_lower.split() if term]
+                if not search_terms:
+                    continue
+                if any(term in keyword for term in search_terms for keyword in keywords):
+                    results.append(_format(article))
+            elif mode == "topic":
+                topics = article.get('topics', ())
+                if normalized_upper in topics:
+                    results.append(_format(article))
+            elif mode == "location":
+                locations = article.get('locations', ())
+                if normalized_upper in locations:
+                    results.append(_format(article))
+            elif mode == "site":
+                sites = article.get('sites', ())
+                if any(normalized_lower == site.lower() for site in sites):
+                    results.append(_format(article))
+
+        if not results and mode in {"search", "location", "topic"}:
+            # Fall back to generic top stories if the specific filter has no match
+            results = [_format(article) for article in OFFLINE_ARTICLES]
+
+        return results[: self._max_results]
+
+    def _get_news(self, query, fallback_mode=None, fallback_value=None):
         url = BASE_URL + query + self._ceid()
         try:
             if self._proxy:
@@ -307,11 +358,15 @@ class GNews:
             else:
                 feed_data = feedparser.parse(url, agent=USER_AGENT)
 
-            return [item for item in
-                    map(self._process, feed_data.entries[:self._max_results]) if item]
+            processed = [item for item in
+                         map(self._process, feed_data.entries[:self._max_results]) if item]
+            if processed:
+                return processed
         except Exception as err:
             logger.error(err.args[0])
-            return []
+        if fallback_mode:
+            return self._offline_fallback(fallback_mode, fallback_value)
+        return []
 
     def store_in_mongodb(self, news):
         """
