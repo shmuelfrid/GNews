@@ -76,7 +76,11 @@
     }
     // desktop-only sentence: how today compares with the goal deficit
     let goalLine = '';
-    if (b.targetDeficit > 0) {
+    if (b.belowFloor) {
+      goalLine = '<p class="notice warn today-note">' + M.icon('alert') + '<span>Your budget is under ' + nb(U.int(b.budgetFloor) + ' kcal') + '. Eat at least that much and add a walk instead, or pick a gentler pace in your plan.</span></p>';
+    } else if (b.targetDeficit > 0 && !b.hasFood) {
+      goalLine = '<p class="today-goalline">' + M.icon('target', 'sm') + '<span>Goal deficit is <b>' + nb(U.int(b.targetDeficit) + ' kcal') + '</b> a day. Log your meals to see how today compares.</span></p>';
+    } else if (b.targetDeficit > 0) {
       const diff = b.deficitSoFar - b.targetDeficit;
       goalLine = '<p class="today-goalline">' + M.icon(diff >= 0 ? 'check' : 'target', 'sm') + '<span>Goal deficit is <b>' + nb(U.int(b.targetDeficit) + ' kcal') + '</b> a day. ' +
         (diff >= 0 ? 'You’re already <b>' + nb(U.int(diff) + ' kcal') + '</b> ahead of it.' : '<b>' + nb(U.int(-diff) + ' kcal') + '</b> to go — staying under budget gets you there.') + '</span></p>';
@@ -113,13 +117,6 @@
         '<dd><span class="today-fig-n">' + U.int(f.v) + '</span>' + unitSpan('kcal') + '</dd></div>').join('') + '</dl>' +
       '<p class="today-foot">' + esc(foot) + '</p>' + (goalLine || '') +
       '</section>';
-  }
-
-  function energyExtras(b) {
-    // shown under the focal ring: honest notes for brand-new users / low budgets
-    const out = [];
-    if (b.belowFloor) out.push('<p class="notice warn today-note">' + M.icon('alert') + '<span>Your budget is under ' + U.int(b.budgetFloor) + ' kcal. Eat at least that much and add a walk instead — or pick a gentler pace in your plan.</span></p>');
-    return out.join('');
   }
 
   function weightCard(a, pl, desk) {
@@ -168,7 +165,8 @@
       '<div class="legend today-wlegend"><span class="legend-item"><span class="dot line" style="background:var(--d-trend)"></span><span>Trend</span></span>' +
       (a.projKey ? '<span class="legend-item"><span class="dot dash" style="color:var(--d-proj)"></span><span>At your recent pace</span></span>' : '') +
       '<span class="legend-item"><span class="dot dash" style="color:var(--d-goal)"></span><span>Goal</span></span></div>' +
-      '<div class="today-wstats">' + stats.map(s => '<div class="stat inset"><p class="stat-label"><span>' + esc(s.label) + '</span></p><p class="stat-value">' + esc(s.n) + '<span class="unit">' + esc(s.u) + '</span></p></div>').join('') + '</div>' +
+      '<div class="today-wstats">' + stats.map(s => '<div class="stat inset"><p class="stat-label"><span>' + esc(s.label) + '</span></p>' +
+        (s.n === '–' ? '<p class="stat-sub today-wstat-na">' + esc(s.u.charAt(0).toUpperCase() + s.u.slice(1)) + '</p>' : '<p class="stat-value">' + esc(s.n) + '<span class="unit">' + esc(s.u) + '</span></p>') + '</div>').join('') + '</div>' +
       '<div class="divider"></div>' + hl +
       '</section>';
   }
@@ -373,9 +371,11 @@
     if (!slot) return;
     const u = M.units.unit, today = U.todayKey();
     const days = range === '1M' ? 30 : range === '3M' ? 91 : null;
-    const from = days ? U.addDays(today, -days) : (a.series[0] ? (a.startK < a.series[0].key ? a.startK : a.series[0].key) : today);
+    let from = days ? U.addDays(today, -days) : (a.series[0] ? (a.startK < a.series[0].key ? a.startK : a.series[0].key) : today);
+    // a brand-new journey: don't squeeze one dot into the far corner of a 3-month axis
+    if (a.series.length && a.series[0].key > U.addDays(today, -14) && (!days || days > 14)) from = U.addDays(a.series[0].key, -7);
     const inR = a.series.filter(d => d.key >= from);
-    let to = today;
+    let to = from > U.addDays(today, -14) ? U.addDays(today, 7) : today;
     const proj = [];
     if (a.projKey && a.last) {
       const cap = U.addDays(today, days ? Math.round(days * 0.6) : 365);
@@ -439,7 +439,7 @@
 
       el.innerHTML = '<div class="view today-view' + (wasShown ? ' today-still' : '') + '">' + head +
         '<div class="today-grid">' +
-        '<div class="today-a-energy">' + energyCard(b) + energyExtras(b) + '</div>' +
+        '<div class="today-a-energy">' + energyCard(b) + '</div>' +
         '<div class="today-a-weight">' + weightCard(a, pl, desk) + '</div>' +
         '<div class="today-a-plan">' + planChecklist(b, ta, p) + '</div>' +
         '<div class="today-a-deficit">' + deficitCard(da, b) + '</div>' +

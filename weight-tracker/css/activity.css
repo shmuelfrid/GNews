@@ -1,0 +1,243 @@
+/* Momentum v2 — Activity screen + Add workout / Samsung Health sheets (owner: activity builder).
+   Every class is prefixed .act-. Tokens only, no raw colours. */
+
+/* =====================================================================
+   LAYOUT — one column on phones (order below), two columns ≥ 900px
+   ===================================================================== */
+.act-view { gap: var(--s-6); }
+.act-grid { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.act-col { display: contents; }
+.act-grid > .act-col > div { min-width: 0; display: flex; flex-direction: column; }
+.act-grid > .act-col > div > .card { flex: 1 1 auto; }
+.act-o1 { order: 1; } .act-o2 { order: 2; } .act-o3 { order: 3; }
+.act-o4 { order: 4; } .act-o5 { order: 5; } .act-o6 { order: 6; }
+@media (min-width: 900px) {
+  .act-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+  .act-col { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+  .act-grid > .act-col > div { order: 0; }
+}
+
+/* header + day stepper */
+.act-head { align-items: center; }
+.act-head h1 { overflow-wrap: anywhere; }
+.act-head .ph-text { flex: 1 1 120px; }
+.act-date { display: flex; align-items: center; gap: 2px; flex: none; }
+.act-date-chip {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: var(--r-pill);
+  background: var(--surface); box-shadow: var(--sh-1); border: var(--card-border);
+  font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap;
+}
+.act-date .btn-icon:disabled { opacity: .35; }
+
+/* number + small unit */
+.act-kv { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.act-kv-n { font-weight: 700; color: var(--ink); }
+.act-kv-u { font-size: 12px; font-weight: 600; color: var(--muted); }
+.act-kv.sm .act-kv-n { font-size: 15px; }
+.act-kv.md .act-kv-n { font-size: 17px; }
+.act-kv.lg .act-kv-n { font-size: 28px; letter-spacing: -.02em; line-height: 1.2; }
+.act-kv.lg .act-kv-u { font-size: 13px; }
+.act-kv.xl { gap: 8px; }
+.act-kv.xl .act-kv-n { font-size: var(--fs-hero); line-height: 1.08; font-weight: 800; letter-spacing: -.03em; }
+.act-kv.xl .act-kv-u { font-size: 15px; }
+.act-kv.muted-kv .act-kv-n { color: var(--muted); }
+
+/* =====================================================================
+   FOCAL: burn card
+   ===================================================================== */
+.act-burn { box-shadow: var(--sh-2); gap: var(--s-4); }
+.act-over { margin: 0; }
+.act-hero { margin-top: -8px; }
+.act-bar { display: flex; gap: 2px; height: 14px; border-radius: var(--r-pill); overflow: hidden; min-width: 0; }
+.act-bar-seg { min-width: 6px; height: 100%; }
+.act-bar-seg.rest { background: var(--d-rest); }
+.act-bar-seg.active { background: var(--d-active); }
+.act-bar-seg.workout { background: var(--d-workout); }
+.act-bar-seg.empty { flex: 1 1 0; background: var(--d-track); }
+.act-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.act-leg { display: flex; align-items: center; gap: 10px; min-height: 30px; min-width: 0; }
+.act-leg-l { flex: 1 1 auto; min-width: 0; font-size: 15px; line-height: 20px; color: var(--ink-2); }
+.act-leg-none { flex: none; font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.act-leg.none .dot { opacity: .45; }
+.act-fine { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+.act-fine .ic { margin-top: 3px; flex: none; }
+.act-push { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-md); background: var(--teal-tint); min-width: 0; }
+.act-push .ic-bubble { background: var(--surface); }
+.act-push-t { min-width: 0; flex: 1 1 auto; }
+.act-push-h { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); text-wrap: pretty; }
+.act-push-s { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); text-wrap: pretty; }
+.act-burn-foot { padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 20px; color: var(--muted); text-wrap: pretty; }
+.act-burn-foot b { color: var(--ink-2); font-weight: 700; }
+.act-outlook { color: var(--ink-2); }
+
+/* =====================================================================
+   Steps card
+   ===================================================================== */
+.act-steps { gap: var(--s-4); }
+.act-steps-top { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.act-steps-top .ring .ring-value { font-size: 17px; font-weight: 700; letter-spacing: 0; }
+.act-steps-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.act-steps-txt .t-over { margin: 0; }
+.act-steps-n { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.act-steps-big { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.act-steps-goal { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.act-steps-empty { font-size: 20px; line-height: 28px; font-weight: 700; color: var(--ink); }
+.act-steps-m { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink-2); }
+.act-steps-s { font-size: 13px; line-height: 18px; color: var(--muted); text-wrap: pretty; }
+.act-steps-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.act-steps-actions .btn { flex: 1 1 140px; }
+.act-src { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); min-width: 0; }
+.act-round { border-radius: var(--r-pill); }
+.act-src-t { flex: 1 1 auto; min-width: 0; }
+.act-src-h { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ink); }
+.act-src-s { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--muted); overflow-wrap: anywhere; }
+.act-src-btn { flex: none; }
+
+/* =====================================================================
+   Add a workout (primary action)
+   ===================================================================== */
+.card.act-add { flex-direction: row; align-items: center; gap: 14px; min-height: 76px; padding: 14px 16px 14px 14px; }
+.act-add-ic { flex: none; width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--brand); color: var(--on-brand); display: grid; place-items: center; }
+.act-add-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.act-add-h { font-size: 17px; line-height: 22px; font-weight: 600; color: var(--ink); }
+.act-add-s { font-size: 13px; line-height: 18px; color: var(--muted); text-wrap: pretty; }
+.act-add-chev { flex: none; color: var(--brand); }
+
+/* =====================================================================
+   Workouts list
+   ===================================================================== */
+.act-meta { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; line-height: 24px; }
+.act-wo-list { display: flex; flex-direction: column; margin: -4px -10px; }
+.act-wo {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: start;
+  width: 100%; padding: 12px 10px; border-radius: 14px; text-align: left; color: inherit; position: relative;
+  transition: background var(--t-fast);
+}
+.act-wo + .act-wo::before { content: ""; position: absolute; top: 0; left: 68px; right: 10px; height: 1px; background: var(--line); }
+.act-wo:hover { background: var(--surface-2); }
+.act-wo-ic { width: 44px; height: 44px; border-radius: var(--r-md); background: var(--teal-tint); color: var(--teal); display: grid; place-items: center; }
+.act-wo-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 1px; }
+.act-wo-t { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.act-wo-s { font-size: 13px; line-height: 18px; color: var(--muted); }
+.act-wo-d { font-size: 13px; line-height: 18px; color: var(--ink-2); overflow-wrap: anywhere; }
+.act-tag {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+  min-height: 24px; padding: 3px 10px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink-2);
+  font-size: 12px; line-height: 1.35; font-weight: 600; max-width: 100%;
+}
+.act-tag .ic { flex: none; }
+.act-tag.sam { background: var(--teal-tint); color: var(--teal); }
+.act-wo-end { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 1px; }
+.act-wo-edit { color: var(--muted); }
+
+/* =====================================================================
+   7-day chart
+   ===================================================================== */
+.act-week { gap: var(--s-3); }
+.act-week-head { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.act-week-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; line-height: 18px; color: var(--muted); }
+.act-dash { display: inline-block; width: 18px; height: 0; border-top: 1.5px dashed var(--ink-2); flex: none; }
+.act-chart { min-height: 168px; margin-top: 4px; }
+.act-week-take { font-size: 13px; line-height: 20px; color: var(--ink-2); text-wrap: pretty; padding-top: 12px; border-top: 1px solid var(--line); }
+.act-week-take b { color: var(--ink); }
+
+/* =====================================================================
+   Samsung Health card
+   ===================================================================== */
+.act-sam { gap: var(--s-3); }
+.act-sam-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.act-sam-head .card-title { min-width: 0; }
+.act-sam-p { font-size: 13px; line-height: 20px; color: var(--ink-2); text-wrap: pretty; }
+.act-sam-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+.act-sam-btns .btn { min-width: 0; padding: 0 12px; }
+.act-sam-manual { align-self: flex-start; margin: -4px 0 -10px -4px; white-space: normal; text-align: left; }
+
+/* =====================================================================
+   SHEETS (workout + Samsung import)
+   ===================================================================== */
+.act-sheet .sheet-body { gap: var(--s-5); }
+.act-mode { flex: none; }
+.act-drop { width: 100%; min-height: 200px; gap: 10px; }
+.act-drop-ic { width: 56px; height: 56px; border-radius: var(--r-md); margin-bottom: 4px; }
+.act-drop-h { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--ink); }
+.act-drop-s { font-size: 13px; line-height: 19px; color: var(--muted); max-width: 36ch; text-wrap: pretty; }
+.act-center { text-align: center; margin-top: -8px; }
+.act-howto { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.act-howto b { color: var(--ink); }
+.act-honest { font-size: 13px; padding: 12px 14px; }
+
+.act-photo-row { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.act-photo { width: 88px; height: 88px; flex: none; object-fit: cover; border-radius: var(--r-md); background: var(--surface-2); }
+.act-photo.tall { width: 80px; height: 140px; object-position: top; }
+.act-photo-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.act-photo-t .thinking { width: 100%; padding: 12px 14px; }
+.act-photo-t .link-btn { margin-left: -4px; min-height: 36px; }
+.act-photo-h { font-size: 17px; line-height: 22px; font-weight: 600; }
+
+/* label-left / value-right review list */
+.act-fields { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--surface); }
+.act-f { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 12px 0 16px; min-width: 0; }
+.act-f + .act-f { border-top: 1px solid var(--line); }
+.act-f-l { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.act-f-in { flex: 0 1 auto; width: min(58%, 210px); display: flex; align-items: center; gap: 6px; min-width: 0; }
+.act-f-input {
+  flex: 1 1 auto; width: 100%; min-width: 0; min-height: 44px; padding: 0 8px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.act-f-input:hover { background: var(--surface-2); }
+.act-f-input:focus { outline: none; background: var(--surface-2); box-shadow: 0 0 0 2px var(--brand); }
+.act-f-input::placeholder { color: var(--muted); font-weight: 500; }
+.act-f-select { text-align-last: right; cursor: pointer; }
+.act-f-u { flex: none; min-width: 30px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.act-counted { display: flex; flex-direction: column; gap: 2px; }
+.act-counted-l { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); min-width: 0; }
+.act-impact { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--r-md); background: var(--surface-2); }
+.act-impact > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); }
+.act-impact-v { white-space: nowrap; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.act-impact-v b { color: var(--ink); font-weight: 700; }
+.act-impact-v small { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+/* form */
+.act-fs { border: 0; padding: 0; margin: 0; min-width: 0; }
+.act-fs legend { padding: 0; margin-bottom: 10px; }
+.act-types .chip { min-height: 44px; padding: 0 16px; }
+.act-row3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.act-row3 > .field:first-child { grid-column: 1 / -1; }
+@media (min-width: 560px) {
+  .act-row3 { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, 1fr); }
+  .act-row3 > .field:first-child { grid-column: auto; }
+}
+.act-kcal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.act-kcal-head .link-btn { margin: -10px -4px -10px 0; }
+.act-kcal-head .link-btn[aria-pressed="true"] { color: var(--teal); }
+.act-kcal-in { font-size: 20px; font-weight: 700; }
+.act-more {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  min-height: 52px; padding: 8px 4px 0; border-top: 1px solid var(--line); font-size: 15px; font-weight: 600; color: var(--ink); text-align: left;
+}
+.act-more .muted { font-weight: 500; }
+.act-more-ic { color: var(--muted); transition: transform var(--t-med) var(--ease); flex: none; }
+.act-more[aria-expanded="true"] .act-more-ic { transform: rotate(180deg); }
+.act-more-body { display: flex; flex-direction: column; gap: var(--s-5); margin-top: -8px; }
+.act-del { color: var(--danger); }
+.act-del:hover { background: var(--danger-tint); color: var(--danger); }
+
+/* Samsung sheet */
+.act-replace { display: flex; align-items: center; gap: 6px; }
+.act-replace .ic { flex: none; }
+.act-sam-wos { display: flex; flex-direction: column; gap: 4px; }
+.act-sam-wos .toggle > span:first-child { min-width: 0; font-weight: 600; line-height: 1.4; }
+.act-mini { list-style: none; margin: 0; padding: 0; }
+.act-mini li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
+.act-mini li > span:first-child { min-width: 0; }
+.act-exp-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.act-exp-btns .btn { flex: 1 1 160px; }
+.act-exp-sum { display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: var(--r-md); background: var(--surface-2); }
+.act-exp-range { margin-top: 2px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.act-exp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin: 0; }
+.act-exp-grid > div { min-width: 0; }
+.act-exp-grid dt { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.act-exp-grid dd { margin: 2px 0 0; font-size: 17px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.act-exp-grid dd small { font-size: 12px; font-weight: 600; color: var(--muted); }

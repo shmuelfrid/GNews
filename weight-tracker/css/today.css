@@ -330,3 +330,5 @@ span.today-check { border-radius: 50%; display: grid; place-items: center; }
 .profile-stepper .btn-icon:disabled { opacity: .4; }
 .profile-sync { display: flex; align-items: center; gap: 8px; margin: 4px 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 500; }
 @media (max-width: 479px) { .profile-theme > div { flex: 1 1 100%; } .profile-theme .seg { display: grid; width: 100%; } }
+.today-wstat-na { color: var(--muted); }
+.today-energy .notice.today-note { text-align: left; }
