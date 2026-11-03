@@ -461,6 +461,36 @@
     return H;
   }
 
+  /* ================= BMI (shared API; added by the BMI builder) =================
+     bmi(kg, heightCm) -> kg / m² (unrounded) · bmiCategory(bmi) -> {key,label,min,max} (cutoffs 18.5 / 25 / 30)
+     healthyWeightRange(heightCm) -> {minKg, maxKg} (BMI 18.5–24.9) · bmiForWeight(kg, cm) · weightForBmi(bmi, cm) */
+  const BMI_CATS = [
+    { key: 'under', label: 'Underweight', min: 0, max: 18.5 },
+    { key: 'healthy', label: 'Healthy', min: 18.5, max: 25 },
+    { key: 'over', label: 'Overweight', min: 25, max: 30 },
+    { key: 'obese', label: 'Obese', min: 30, max: Infinity }
+  ];
+  function bmi(kg, heightCm) {
+    if (!fin(kg) || !fin(heightCm) || kg <= 0 || heightCm <= 0) return null;
+    const m = heightCm / 100;
+    return kg / (m * m);
+  }
+  function bmiCategory(b) {
+    if (!fin(b)) return null;
+    const c = b < 18.5 ? BMI_CATS[0] : b < 25 ? BMI_CATS[1] : b < 30 ? BMI_CATS[2] : BMI_CATS[3];
+    return Object.assign({}, c);
+  }
+  function weightForBmi(b, heightCm) {
+    if (!fin(b) || !fin(heightCm) || heightCm <= 0) return null;
+    const m = heightCm / 100;
+    return b * m * m;
+  }
+  const bmiForWeight = (kg, heightCm) => bmi(kg, heightCm);
+  function healthyWeightRange(heightCm) {
+    if (!fin(heightCm) || heightCm <= 0) return null;
+    return { minKg: weightForBmi(18.5, heightCm), maxKg: weightForBmi(24.9, heightCm) };
+  }
+
   M.calc = {
     KCAL_PER_KG, LB, MET, WORKOUT_TYPES, BASELINE_ACTIVE,
     keyOf, fromKey, addDays, diffDays, weekStartKey, isValidKey,
@@ -469,6 +499,7 @@
     activeFor, workoutsFor, eatenFor, hasActivity, avgActive,
     kcalPerMin, stepKcal, equivalents, workoutType, estimateWorkoutKcal,
     plan, balance, todayActions,
-    weightAnalysis, milestones, newlyCrossed, deficitAnalysis, headlines
+    weightAnalysis, milestones, newlyCrossed, deficitAnalysis, headlines,
+    BMI_CATS, bmi, bmiCategory, healthyWeightRange, bmiForWeight, weightForBmi
   };
 })(typeof window !== 'undefined' ? window : globalThis);

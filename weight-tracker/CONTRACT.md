@@ -46,7 +46,7 @@ and never restyles a base class globally. Use tokens (`var(--…)`) only — nev
 * `app.js` calls `render()` on route change **and on every data change** (coalesced per animation frame). Keep render idempotent.
   Preserve transient UI state (open tab, selected range) in module-level variables. Scroll position is preserved on same-route re-renders.
 * While an AI call or a sheet is in progress, data changes still re-render the view; don't keep critical state only in DOM.
-* Routes: `#today #food #activity #progress #plan #profile`, optional query `#food?date=2026-11-02` → `ctx.params.date`.
+* Routes: `#today #food #activity #progress #plan #profile` + sub-screen `#bmi` (`M.views.bmi`, js/views/bmi.js + css/bmi.css, prefix `.bmi-`; not a nav tab — app highlights the tab you came from and sets `M.prevRoute` for its back button; entry points: BMI tile on Progress stats, BMI row in Profile body stats), optional query `#food?date=2026-11-02` → `ctx.params.date`.
   Navigate with `M.go('food', {date:'2026-11-02'})` or plain `<a href="#plan">`. Force a re-render: `M.render()`.
 * Onboarding: while `M.store.profileComplete()` is false, app renders `M.views.onboarding.render(el, {route:'onboarding', params:{}, profile})`
   (profile may be partial, e.g. migrated from v1 without sex/birthYear/height — prefill from it). Nav chrome is hidden.
@@ -78,7 +78,7 @@ Profile {
   name: string; sex: 'male'|'female'; birthYear: number; heightCm: number;
   unit: 'lb'|'kg'; theme: 'system'|'light'|'dark';
   startKg: number; startDate: 'YYYY-MM-DD'; goalKg: number; targetDate: 'YYYY-MM-DD'|null;
-  paceKgPerWeek?: number; stepGoal?: number; activityBaseline?: string;
+  paceKgPerWeek?: number; stepGoal?: number; activityBaseline?: string; waistCm?: number;   // waist (cm), optional, set on #bmi
   createdAt: number; updatedAt: number; celebrated: string[];   // milestone ids already celebrated
 }
 DayDoc {                      // one per date, M.state.days['2026-11-03']
@@ -183,6 +183,10 @@ b.steps, b.activeAvg7, b.activeSource, b.hasFood, b.hasActivity, b.kg, b.plan
 `milestones(profile,analysis) newlyCrossed(ms, celebrated)`
 `deficitAnalysis(profile,days,now,n)→{days:[{key,logged,partial,eaten,burn,budget,deficit,under,target}], completedCount, underCount, total, avg, expectedKg, actualKg, streakUnder, best, today}`
 `headlines(profile,days,now)→[{text,html}]` · `KCAL_PER_KG = 7700` · date helpers re-exported.
+**BMI** (shared; callers in feature files should guard with `M.calc.bmi ? … : fallback`):
+`bmi(kg, heightCm)` → kg/m² unrounded (`null` for invalid input) · `bmiCategory(bmi)` → `{key:'under'|'healthy'|'over'|'obese', label:'Underweight'|'Healthy'|'Overweight'|'Obese', min, max}` (cutoffs 18.5 / 25 / 30, lower bound inclusive; `null` for non-finite) ·
+`healthyWeightRange(heightCm)` → `{minKg, maxKg}` (BMI 18.5 and 24.9) · `bmiForWeight(kg, heightCm)` · `weightForBmi(bmi, heightCm)` → kg · `BMI_CATS`.
+Example: 87.8 kg @ 178 cm → 27.7 (Overweight); healthy range for 178 cm → 58.6–78.9 kg.
 Celebrations of newly crossed milestones are handled by `app.js` — views just list milestones.
 
 ## 7. `M.charts` (js/charts.js) — load the dataviz rules: one takeaway title per chart, direct labels, few gridlines

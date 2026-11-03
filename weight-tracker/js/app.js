@@ -41,7 +41,8 @@
     { id: 'plan', label: 'Plan', icon: 'plan' },
     { id: 'profile', label: 'Profile', icon: 'profile' }
   ];
-  const ROUTES = NAV.map(n => n.id);
+  const ROUTES = NAV.map(n => n.id).concat(['bmi']);   // 'bmi' is a sub-screen, not a nav tab
+  const SUB = { bmi: 'progress' };                       // sub-route -> default parent (back target + highlighted tab)
   function parseHash() {
     const h = (location.hash || '').replace(/^#\/?/, '');
     const [path, q] = h.split('?');
@@ -92,9 +93,10 @@
     }
     app.classList.remove('is-onboarding');
     const { route, params } = parseHash();
-    renderNav(route);
-    const v = M.views[route];
     const routeChanged = route !== lastRoute;
+    if (routeChanged && lastRoute && !SUB[lastRoute]) M.prevRoute = lastRoute;   // back target for sub-screens (M.prevRoute)
+    renderNav(SUB[route] ? (M.prevRoute && NAV.some(n => n.id === M.prevRoute) ? M.prevRoute : SUB[route]) : route);
+    const v = M.views[route];
     if (currentName !== route) teardown();
     current = v; currentName = route; lastRoute = route;
     const y = window.scrollY;

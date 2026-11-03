@@ -170,7 +170,7 @@
     return o;
   }
   const PROFILE_KEYS = ['name', 'sex', 'birthYear', 'heightCm', 'unit', 'theme', 'startKg', 'startDate', 'goalKg', 'targetDate',
-    'paceKgPerWeek', 'stepGoal', 'activityBaseline', 'createdAt', 'updatedAt', 'celebrated', 'migratedV1', 'migratedV1Remote', 'v'];
+    'paceKgPerWeek', 'stepGoal', 'activityBaseline', 'waistCm', 'createdAt', 'updatedAt', 'celebrated', 'migratedV1', 'migratedV1Remote', 'v'];
   function cleanProfile(p) {
     if (!p || typeof p !== 'object') return null;
     const o = {};

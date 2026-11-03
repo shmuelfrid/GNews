@@ -252,5 +252,31 @@ t('milestones: every 5 lb, halfway, decades, goal, in journey order', () => {
   const half = a.milestones.weight.find(m => m.id === 'half'); near(half.targetKg, 196 * LB, 1e-9);
 });
 
+/* ---------------- BMI ---------------- */
+t('bmi: 87.8 kg at 178 cm is 27.7, Overweight', () => {
+  near(C.bmi(87.8, 178), 27.71, 0.01);
+  assert.strictEqual(C.bmi(87.8, 178).toFixed(1), '27.7');
+  assert.strictEqual(C.bmiCategory(C.bmi(87.8, 178)).key, 'over');
+  assert.strictEqual(C.bmiCategory(27.7).label, 'Overweight');
+  assert.strictEqual(C.bmi(NaN, 178), null); assert.strictEqual(C.bmi(80, 0), null); assert.strictEqual(C.bmiCategory(NaN), null);
+});
+t('bmi categories: cutoffs 18.5 / 25 / 30 (lower bound inclusive)', () => {
+  assert.strictEqual(C.bmiCategory(18.49).key, 'under');
+  assert.strictEqual(C.bmiCategory(18.5).key, 'healthy');
+  assert.strictEqual(C.bmiCategory(24.99).key, 'healthy');
+  assert.strictEqual(C.bmiCategory(25).key, 'over');
+  assert.strictEqual(C.bmiCategory(30).key, 'obese');
+  const c = C.bmiCategory(22); assert.strictEqual(c.min, 18.5); assert.strictEqual(c.max, 25);
+});
+t('healthy weight range for 178 cm is 58.6–78.9 kg', () => {
+  const r = C.healthyWeightRange(178);
+  assert.strictEqual(r.minKg.toFixed(1), '58.6'); assert.strictEqual(r.maxKg.toFixed(1), '78.9');
+  assert.strictEqual(C.healthyWeightRange(NaN), null);
+});
+t('weightForBmi / bmiForWeight round-trip', () => {
+  near(C.bmiForWeight(C.weightForBmi(30, 178), 178), 30, 1e-9);
+  near(C.weightForBmi(25, 178), 79.21, 0.001);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

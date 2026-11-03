@@ -312,11 +312,16 @@
     if (da30.completedCount >= 2) tiles.push({ label: da30.gain ? 'On target' : 'Under budget', value: da30.underCount + '/' + da30.completedCount, unit: 'days', cap: 'Last 30 days' });
     if (a.bestWeek && a.dataWeeks.length >= 2) tiles.push({ label: 'Best week', value: M.units.signed(a.bestWeek.change), unit: u, cap: 'Week of ' + U.fmtDate(a.bestWeek.start) });
     if (a.extreme && a.series.length >= 3) tiles.push({ label: a.dir < 0 ? 'Lowest' : 'Highest', value: M.units.n(a.extreme.kg), unit: u, cap: U.relDay(U.keyOf(a.extreme.t)) });
+    // BMI entry point (links to #bmi) — added by the BMI builder
+    const bmiV = M.calc.bmi ? M.calc.bmi(M.data.currentKg(), +p.heightCm) : null, bmiC = bmiV != null && M.calc.bmiCategory ? M.calc.bmiCategory(Math.round(bmiV * 10) / 10) : null;   // classify the shown value
+    if (fin(bmiV) && bmiC) tiles.push({ label: 'BMI', value: bmiV.toFixed(1), unit: '', cap: bmiC.label, href: '#bmi', cat: bmiC.key });
     if (tiles.length < 2) return '';
     return '<section class="section prog-o4 prog-stats" aria-labelledby="prog-st">' +
       '<h2 id="prog-st" class="sr-only">Your stats</h2>' +
-      '<div class="grid-stats prog-stat-grid">' + tiles.map(t =>
-        '<div class="stat"><p class="stat-label"><span>' + esc(t.label) + '</span></p>' +
+      '<div class="grid-stats prog-stat-grid">' + tiles.map(t => t.href
+        ? '<a class="stat bmi-stat-link" href="' + t.href + '" aria-label="BMI ' + esc(t.value) + ', ' + esc(t.cap) + '. See BMI details"><p class="stat-label"><span>' + esc(t.label) + '</span>' + M.icon('chevron', 'sm') + '</p>' +
+          '<p class="stat-value">' + esc(t.value) + '</p><p class="stat-sub"><span class="bmi-stat-cat bmi-k-' + t.cat + '"><span class="bmi-pill-dot" aria-hidden="true"></span>' + esc(t.cap) + '</span></p></a>'
+        : '<div class="stat"><p class="stat-label"><span>' + esc(t.label) + '</span></p>' +
         '<p class="stat-value">' + esc(t.value) + (t.unit ? '<span class="unit">' + esc(t.unit) + '</span>' : '') + '</p>' +
         '<p class="stat-sub' + (t.tone ? ' ' + t.tone : '') + '">' + esc(t.cap) + '</p></div>').join('') +
       '</div></section>';

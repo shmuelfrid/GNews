@@ -10,7 +10,7 @@
   let editing = false, edraft = null, wasShown = false;
 
   /* ================= CSV ================= */
-  const COLS = ['type', 'date', 'time', 'name', 'meal', 'kcal', 'weight_kg', 'minutes', 'steps', 'active_kcal', 'total_kcal', 'active_minutes', 'distance_km', 'avg_hr', 'protein', 'carbs', 'fat', 'tags', 'note', 'source', 'counted_in_samsung', 'id'];
+  const COLS = ['type', 'date', 'time', 'name', 'meal', 'kcal', 'weight_kg', 'bmi', 'minutes', 'steps', 'active_kcal', 'total_kcal', 'active_minutes', 'distance_km', 'avg_hr', 'protein', 'carbs', 'fat', 'tags', 'note', 'source', 'counted_in_samsung', 'id'];
   const cell = v => { if (v == null || (typeof v === 'number' && !isFinite(v))) return ''; const s = String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   function buildCSV() {
     const rows = [COLS.join(',')];
@@ -18,7 +18,7 @@
     const S = M.state;
     Object.keys(S.days).sort().forEach(k => {
       const d = S.days[k];
-      d.weights.forEach(w => put({ type: 'weight', date: k, time: U.hhmm(w.t), weight_kg: Math.round(w.kg * 1000) / 1000, tags: (w.tags || []).join('; '), note: w.note, id: w.id }));
+      d.weights.forEach(w => put({ type: 'weight', date: k, time: U.hhmm(w.t), weight_kg: Math.round(w.kg * 1000) / 1000, bmi: C.bmi && S.profile && C.bmi(w.kg, +S.profile.heightCm) != null ? Math.round(C.bmi(w.kg, +S.profile.heightCm) * 10) / 10 : '', tags: (w.tags || []).join('; '), note: w.note, id: w.id }));
       d.foods.forEach(f => put({ type: 'food', date: k, time: U.hhmm(f.t), name: f.name, meal: f.meal, kcal: f.kcal, protein: f.protein, carbs: f.carbs, fat: f.fat, note: f.note, source: f.source, id: f.id }));
       d.workouts.forEach(w => put({ type: 'workout', date: k, time: U.hhmm(w.t), name: w.name || (C.workoutType(w.type) || {}).label, meal: '', kcal: w.kcal, minutes: w.minutes, distance_km: w.distanceKm, avg_hr: w.avgHr, note: w.note, source: w.source, counted_in_samsung: w.countedInSamsung ? 'yes' : 'no', id: w.id, tags: w.type }));
       if (d.activity) { const a = d.activity; put({ type: 'activity', date: k, time: a.syncedAt ? U.hhmm(a.syncedAt) : '', steps: a.steps, active_kcal: a.activeKcal, total_kcal: a.totalKcal, active_minutes: a.activeMinutes, distance_km: a.distanceKm, source: a.source }); }
@@ -118,6 +118,13 @@
   }
 
   /* ================= sections ================= */
+  /** BMI line in body stats -> #bmi (BMI builder) */
+  function bmiRow(p, kg) {
+    const b = C.bmi ? C.bmi(kg, +p.heightCm) : null, c = b != null && C.bmiCategory ? C.bmiCategory(Math.round(b * 10) / 10) : null;   // classify the shown value
+    if (!(isFinite(b) && c)) return '';
+    return '<a class="bmi-profile-link" href="#bmi" aria-label="BMI ' + b.toFixed(1) + ', ' + esc(c.label) + '. See BMI details"><span class="bmi-pl-main"><span class="bmi-pl-l">BMI</span>' +
+      '<span class="bmi-pl-v">' + b.toFixed(1) + '</span><span class="bmi-pill bmi-c-' + c.key + '"><span class="bmi-pill-dot" aria-hidden="true"></span>' + esc(c.label) + '</span></span>' + M.icon('chevron', 'row-chev') + '</a>';
+  }
   function bodyCard(p) {
     const kg = M.data.currentKg(), bmr = M.data.bmr();
     const head = '<div class="card-head"><div class="ch-text"><h2 class="card-title" id="pf-body-t">Body stats</h2>' +
@@ -135,7 +142,7 @@
       ];
       return '<section class="card profile-card" aria-labelledby="pf-body-t">' + head +
         '<dl class="profile-tiles">' + tiles.map(t => '<div class="profile-tile"><dt>' + esc(t[0]) + '</dt><dd><span class="profile-tile-n">' + esc(t[1]) + '</span>' + (t[2] ? '<span class="today-u">' + esc(t[2]) + '</span>' : '') + '</dd></div>').join('') + '</dl>' +
-        burnBox(bmr) + '</section>';
+        bmiRow(p, kg) + burnBox(bmr) + '</section>';
     }
     const d = edraft;
     const height = M.units.unit === 'lb'
