@@ -66,7 +66,7 @@
       foot = 'Burned so far: ' + parts.join(' + ');
     } else {
       figs = [
-        { label: 'Eat under', dot: 'eaten', v: budget },
+        { label: b.gain ? 'Eat at least' : 'Eat under', dot: 'eaten', v: budget },
         { label: 'Full-day burn', dot: 'workout', v: b.burnExpected },
         b.targetDeficit >= 0 ? { label: 'Goal deficit', dot: 'deficit', v: b.targetDeficit } : { label: 'Goal surplus', dot: 'surplus', v: -b.targetDeficit }
       ];
@@ -91,7 +91,7 @@
     const budget = Math.max(0, b.budget);
     let big, unit, sub, aria, inner;
     if (plan) {
-      big = U.int(budget); unit = 'kcal budget'; sub = 'eat under this today';
+      big = U.int(budget); unit = b.gain ? 'kcal target' : 'kcal budget'; sub = b.gain ? 'eat at least this today' : 'eat under this today';
       aria = 'Plan for today: of ' + U.int(b.burnExpected) + ' kcal expected burn, eat ' + U.int(budget) + ' and keep a ' + U.int(Math.abs(b.targetDeficit)) + ' kcal ' + (b.targetDeficit >= 0 ? 'deficit' : 'surplus');
       const segs = b.targetDeficit >= 0
         ? [{ value: budget, color: 'var(--d-eaten)' }, { value: b.targetDeficit, color: 'var(--d-deficit)' }]
@@ -99,13 +99,13 @@
       inner = M.charts.ring({ size: 176, stroke: 14, max: Math.max(b.burnExpected, budget, 1), segments: segs, ariaLabel: aria });
     } else {
       const over = b.left < 0;
-      big = U.int(over ? b.overBy : b.left); unit = over ? 'kcal over' : 'kcal left';
+      big = U.int(over ? b.overBy : b.left); unit = over ? (b.gain ? 'kcal above target' : 'kcal over') : (b.gain ? 'kcal to go' : 'kcal left');
       sub = U.int(b.eaten) + ' of ' + U.int(budget) + ' eaten';
       aria = U.int(b.eaten) + ' of ' + U.int(budget) + ' kcal eaten, ' + big + ' ' + unit;
       inner = M.charts.ring({ size: 176, stroke: 14, value: budget > 0 ? b.eaten / budget : 0, max: 1, color: 'var(--d-eaten)', ariaLabel: aria });
     }
     return '<div class="today-ring">' + inner +
-      '<div class="today-ring-center" aria-hidden="true"><span class="today-ring-big' + (!plan && b.left < 0 ? ' warn' : '') + '">' + big + '</span>' +
+      '<div class="today-ring-center" aria-hidden="true"><span class="today-ring-big' + (!plan && b.left < 0 && !b.gain ? ' warn' : '') + '">' + big + '</span>' +
       '<span class="today-ring-unit">' + esc(unit) + '</span><span class="today-ring-sub">' + esc(sub) + '</span></div></div>';
   }
   function wrapEnergy(ringHtml, figs, foot, goalLine) {
@@ -177,8 +177,16 @@
     const budget = Math.max(0, b.budget);
     const rows = [];
     // 1. eat under
-    const over = b.left < 0;
-    rows.push(checkRow({
+    const over = b.left < 0 && !b.gain;   // for a gain goal the budget is a minimum: going past it is the aim
+    if (b.gain) {
+      const hit = b.left <= 0;
+      rows.push(checkRow({
+        ring: hit ? miniRing(1, 'done') : miniRing(budget ? b.eaten / budget : 0, 'ring', 'brand'), done: hit,
+        title: 'Eat at least ' + nb(U.int(budget) + ' kcal'),
+        sub: hit ? 'Target reached' : !b.hasFood ? 'Nothing logged yet today' : nb(U.int(b.left) + ' kcal') + ' to go',
+        status: hit ? 'Done' : !b.hasFood ? 'Start' : 'To do', statusTone: hit ? 'good' : '', sheet: 'food', opts: {}
+      }));
+    } else rows.push(checkRow({
       ring: miniRing(budget ? b.eaten / budget : 0, 'ring', over ? 'amber' : 'brand'),
       title: 'Eat under ' + nb(U.int(budget) + ' kcal'),
       sub: over ? nb(U.int(b.overBy) + ' kcal') + ' over budget' : !b.hasFood ? 'Nothing logged yet today' : nb(U.int(b.left) + ' kcal') + ' left' + (hour >= 15 && hour < 21 ? ' for dinner' : ''),
@@ -239,7 +247,8 @@
     let title, sub;
     if (n > 0) {
       const defDays = da.days.filter(d => d.logged && !d.partial && d.deficit > 0).length;
-      title = da.underCount === n && n >= 3 ? 'Under budget every day this week'
+      title = da.gain ? (da.underCount === n && n >= 3 ? 'Hit your calorie target every day this week' : 'Hit your calorie target ' + da.underCount + ' of the last ' + U.plural(n, 'day'))
+        : da.underCount === n && n >= 3 ? 'Under budget every day this week'
         : da.underCount === 0 && defDays > 0 ? 'In a deficit ' + defDays + ' of ' + U.plural(n, 'day') + ', just short of your goal'
           : 'Under budget ' + da.underCount + ' of the last ' + U.plural(n, 'day');
       sub = da.total > 0 ? U.int(da.total) + ' kcal saved ≈ ' + M.units.abs(da.expectedKg) + ' ' + M.units.unit + ' of fat'
@@ -254,7 +263,7 @@
       (empty
         ? '<div class="today-def-empty">' + M.icon('flame') + '<p>Each day you log meals, a bar lands here: teal when you burn more than you eat, amber when you go over.</p></div>'
         : '<div class="today-defchart" data-slot="defchart"></div>' +
-          '<div class="legend today-deflegend"><span class="legend-item"><span class="dot sq deficit"></span><span>Deficit</span></span><span class="legend-item"><span class="dot sq surplus"></span><span>Over budget</span></span>' +
+          '<div class="legend today-deflegend"><span class="legend-item"><span class="dot sq deficit"></span><span>Deficit</span></span><span class="legend-item"><span class="dot sq surplus"></span><span>Surplus</span></span>' +
           (b.targetDeficit > 0 ? '<span class="legend-item"><span class="dot dash" style="color:var(--ink-2)"></span><span>' + U.int(b.targetDeficit) + ' goal</span></span>' : '') + '</div>') +
       '</section>';
   }

@@ -156,13 +156,13 @@
 
   function workoutRow(w) {
     const sp = splitNote(w.note);
-    const sub = [U.fmtTime(w.t), w.minutes ? U.minutes(w.minutes) : '', fin(w.distanceKm) ? M.units.dist(w.distanceKm) : '', fin(w.avgHr) ? w.avgHr + ' bpm' : ''].filter(Boolean).join(' · ');
+    const sub = [U.fmtTime(w.t), w.minutes ? U.minutes(w.minutes) : '', fin(w.distanceKm) ? M.units.dist(w.distanceKm) : '', fin(w.avgHr) ? w.avgHr + ' bpm' : ''].filter(Boolean).map(x => '<span class="act-nw">' + esc(x) + '</span>').join(' · ');
     const detail = [sp.speed != null ? sp.speed + ' ' + sp.unit + ' · ' + sp.incline + '% incline' : '', sp.note].filter(Boolean).join(' · ');
-    const tag = w.countedInSamsung ? '<span class="act-tag sam">' + M.icon('phone', 'xs') + '<span>Already in Samsung Health</span></span>'
+    const tag = w.countedInSamsung ? '<span class="act-tag sam">' + M.icon('phone', 'xs') + '<span>In Samsung Health</span></span>'
       : '<span class="act-tag">' + (w.source === 'photo' ? 'From photo' : w.source === 'samsung-export' ? 'Samsung export' : 'Added manually') + '</span>';
     return '<button type="button" class="act-wo" data-act-edit="' + esc(w.id) + '" aria-label="' + esc('Edit ' + (w.name || typeLabel(w.type)) + ', ' + U.int(w.kcal) + ' kcal') + '">' +
       '<span class="act-wo-ic" aria-hidden="true">' + M.icon(TYPE_ICON[C.workoutType(w.type).id] || 'flame') + '</span>' +
-      '<span class="act-wo-main"><span class="act-wo-t">' + esc(w.name || typeLabel(w.type)) + '</span><span class="act-wo-s">' + esc(sub) + '</span>' +
+      '<span class="act-wo-main"><span class="act-wo-t">' + esc(w.name || typeLabel(w.type)) + '</span><span class="act-wo-s">' + sub + '</span>' +
       (detail ? '<span class="act-wo-d">' + esc(detail) + '</span>' : '') + tag + '</span>' +
       '<span class="act-wo-end">' + kv(w.kcal, 'kcal', w.countedInSamsung ? 'md muted-kv' : 'md') + M.icon('edit', 'sm act-wo-edit') + '</span></button>';
   }

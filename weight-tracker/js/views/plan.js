@@ -44,7 +44,10 @@
     const goalKg = fin(goalDisp) ? M.units.from(goalDisp) : NaN;
     const goalOk = fin(goalKg) && goalKg >= 30 && goalKg <= 300;
     const dateOk = U.isValidKey(draft.date) && draft.date > today && U.diffDays(today, draft.date) <= 365 * 5;
-    const P = C.plan(Object.assign({}, p, { goalKg: goalOk ? goalKg : p.goalKg, targetDate: dateOk ? draft.date : null, paceKgPerWeek: null }), { currentKg: kg, now: Date.now(), typicalBurn });
+    // unchanged draft goal (display-rounded, e.g. "81.6") must use the exact stored kg so Plan matches Today/Food
+    const goalSame = fin(p.goalKg) && goalOk && Math.abs(goalDisp - disp(p.goalKg)) < 0.05;
+    const goalEff = goalSame ? p.goalKg : goalKg;
+    const P = C.plan(Object.assign({}, p, { goalKg: goalOk ? goalEff : p.goalKg, targetDate: dateOk ? draft.date : null, paceKgPerWeek: null }), { currentKg: kg, now: Date.now(), typicalBurn });
     const a = M.data.analysis();
     // recent pace projection toward the DRAFT goal
     let projKey = null, projDays = null;
@@ -53,8 +56,8 @@
       projDays = Math.ceil(P.remainingKg / Math.abs(slope));
       if (projDays <= 3 * 365) projKey = U.addDays(today, projDays); else projDays = null;
     }
-    const dirty = goalOk && dateOk && (Math.abs(goalKg - (p.goalKg || 0)) > 0.01 || draft.date !== p.targetDate);
-    return { p, today, kg, bal, typicalBurn, goalKg, goalOk, dateOk, P, a, slope, projKey, projDays, dirty };
+    const dirty = goalOk && dateOk && (!goalSame || draft.date !== p.targetDate);
+    return { p, today, kg, bal, typicalBurn, goalKg: goalEff, goalOk, dateOk, P, a, slope, projKey, projDays, dirty };
   }
 
   /* ================= goal card (focal) ================= */
@@ -329,7 +332,7 @@
       scen = '<div class="plan-scen" role="radiogroup" aria-label="Choose your pace">' + sc.map(s => {
         const on = draft.date === s.date;
         return '<button type="button" class="plan-sc' + (on ? ' is-on' : '') + '" role="radio" aria-checked="' + on + '" data-scen="' + esc(s.date) + '">' +
-          '<span class="plan-sc-l"><span class="plan-sc-name">' + esc(s.label) + (!s.safe ? ' <span class="badge warn plan-sc-badge">' + (s.kgPerWeek > P.maxSafeKgPerWeek + 1e-9 ? 'Too fast' : 'Low budget') + '</span>' : '') + '</span><span class="plan-sc-pace">' + esc(M.units.abs(s.kgPerWeek) + ' ' + u + ' / week') + '</span></span>' +
+          '<span class="plan-sc-l"><span class="plan-sc-name">' + esc(s.label) + (!s.safe ? ' <span class="badge warn plan-sc-badge">' + (s.kgPerWeek > P.maxSafeKgPerWeek + 1e-9 ? 'Too fast' : 'Low budget') + '</span>' : '') + '</span><span class="plan-sc-pace">' + esc(String(+Math.abs(M.units.to(s.kgPerWeek)).toFixed(2)) + ' ' + u + ' / week') + '</span></span>' +
           '<span class="plan-sc-r"><span class="plan-sc-date">' + esc(dateL(s.date)) + '</span><span class="plan-sc-budget">' + (fin(s.budget) ? esc(U.int(s.budget) + ' kcal / day') : '') + '</span></span>' +
           '</button>';
       }).join('') + '</div>';

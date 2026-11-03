@@ -207,7 +207,7 @@
       const bw = Math.max(4, Math.min(24, slot * 0.62));
       const pos = o.posColor || css('--d-deficit'), neg = o.negColor || css('--d-surplus');
       const showAll = o.labels === 'all' || (o.labels !== 'none' && slot >= 34);
-      const labelEvery = Math.max(1, Math.ceil(46 / slot));
+      const labelEvery = Math.max(1, Math.ceil(36 / slot));
       let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(o.ariaLabel || 'Bar chart') + '">';
       const y0 = sy(0);
       s += '<line class="ch-axis" x1="' + pad.l + '" x2="' + (pad.l + iw) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '"/>';
@@ -216,6 +216,13 @@
         const cx = pad.l + slot * i + slot / 2;
         s += '<rect x="' + (cx - slot / 2 + 2).toFixed(1) + '" y="' + (pad.t - 22) + '" width="' + (slot - 4).toFixed(1) + '" height="' + (H - pad.t + 22 - 4) + '" rx="10" fill="' + css('--brand') + '" opacity=".08"/>';
       });
+      // reference line first, so bar value labels (with a surface halo) sit on top of it
+      if (o.ref && fin(o.ref.value)) {
+        const ry = sy(o.ref.value).toFixed(1);
+        s += '<line x1="' + pad.l + '" x2="' + (pad.l + iw) + '" y1="' + ry + '" y2="' + ry + '" stroke="' + css('--ink-2') + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
+        if (o.ref.label && refRight) s += '<text class="ch-label" x="' + (pad.l + iw + 8) + '" y="' + ry + '" dy="4">' + esc(o.ref.label) + '</text>';
+        else if (o.ref.label) s += '<line x1="' + pad.l + '" x2="' + (pad.l + 18) + '" y1="10" y2="10" stroke="' + css('--ink-2') + '" stroke-width="1.5" stroke-dasharray="4 3"/><text class="ch-label" x="' + (pad.l + 24) + '" y="14">' + esc(o.ref.label) + '</text>';
+      }
       bars.forEach((b, i) => {
         const cx = pad.l + slot * i + slot / 2;
         const top = sy(Math.max(0, b.value)), bot = sy(Math.min(0, b.value));
@@ -237,12 +244,6 @@
           s += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle"' + (b.highlight ? ' class="ch-strong"' : '') + '>' + esc(b.label) + '</text>';
         }
       });
-      if (o.ref && fin(o.ref.value)) {
-        const ry = sy(o.ref.value).toFixed(1);
-        s += '<line x1="' + pad.l + '" x2="' + (pad.l + iw) + '" y1="' + ry + '" y2="' + ry + '" stroke="' + css('--ink-2') + '" stroke-width="1.5" stroke-dasharray="5 5"/>';
-        if (o.ref.label && refRight) s += '<text class="ch-label" x="' + (pad.l + iw + 8) + '" y="' + ry + '" dy="4">' + esc(o.ref.label) + '</text>';
-        else if (o.ref.label) s += '<line x1="' + pad.l + '" x2="' + (pad.l + 18) + '" y1="10" y2="10" stroke="' + css('--ink-2') + '" stroke-width="1.5" stroke-dasharray="4 3"/><text class="ch-label" x="' + (pad.l + 24) + '" y="14">' + esc(o.ref.label) + '</text>';
-      }
       bars.forEach((b, i) => { s += '<rect class="ch-hitbar" data-i="' + i + '" x="' + (pad.l + slot * i).toFixed(1) + '" y="0" width="' + slot.toFixed(1) + '" height="' + H + '" fill="transparent"/>'; });
       s += '</svg>';
       el.insertAdjacentHTML('afterbegin', s);

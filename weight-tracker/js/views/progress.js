@@ -147,7 +147,7 @@
         '<li class="legend-item"><span class="dot prog-dot-weigh"></span><span>Weigh-ins</span></li>' +
         '<li class="legend-item"><span class="dot line prog-line-trend"></span><span>Trend</span></li>' +
         (a.projKey && range !== '1W' ? '<li class="legend-item"><span class="prog-dash proj"></span><span>Projected</span></li>' : '') +
-        '<li class="legend-item"><span class="prog-dash goal"></span><span>Goal</span></li></ul>'
+        (range === 'All' || (a.projKey && range !== '1W') || Math.abs(disp(a.current) - disp(a.goalKg)) < (range === '1W' ? 4 : 12) ? '<li class="legend-item"><span class="prog-dash goal"></span><span>Goal</span></li>' : '') + '</ul>'
       : '';
     const body = a.series.length >= 2
       ? '<div class="prog-chart" data-chart="weight"></div>' + legend

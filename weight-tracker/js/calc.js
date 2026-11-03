@@ -236,12 +236,13 @@
       deficitSoFar: Math.round(burnSoFar - eat.kcal), deficitExpected: Math.round(burnExpected - eat.kcal),
       targetDeficit: pl.targetDeficit, budget, left, over: left < 0, overBy: Math.max(0, -left),
       budgetFloor: pl.minKcal, belowFloor: pl.dir < 0 && budget < pl.minKcal,
+      gain: pl.dir > 0 && !pl.goalReached, // budget is a minimum to reach, not a cap
       hasFood: eat.count > 0, hasActivity: hasActivity(day), plan: pl
     };
   }
   /** "What it takes today": eat under X, and if over budget how to burn it off. */
   function todayActions(bal) {
-    const eq = equivalents(bal.overBy, bal.kg);
+    const eq = equivalents(bal.gain ? 0 : bal.overBy, bal.kg); // eating past the budget is the point of a gain goal
     const gap = Math.max(0, bal.targetDeficit - bal.deficitExpected); // extra burn needed to hit target
     return { eatUnder: Math.max(0, bal.budget), left: bal.left, overBy: bal.overBy, burnToFix: eq, extraBurnForTarget: equivalents(gap, bal.kg) };
   }
@@ -397,7 +398,8 @@
       const b = balance(profile, days, k, now);
       const partial = k === today;
       const deficit = partial ? b.deficitSoFar : b.deficitExpected;
-      list.push({ key: k, logged: b.hasFood, partial, eaten: b.eaten, burn: partial ? b.burnSoFar : b.burnExpected, budget: b.budget, deficit, under: b.hasFood && b.eaten <= b.budget, target: b.targetDeficit });
+      // under = met the day's calorie target: at or under budget when losing, at or over it when gaining
+      list.push({ key: k, logged: b.hasFood, partial, eaten: b.eaten, burn: partial ? b.burnSoFar : b.burnExpected, budget: b.budget, deficit, gain: b.gain, under: b.hasFood && (b.gain ? b.eaten >= b.budget : b.eaten <= b.budget), target: b.targetDeficit });
     }
     const completed = list.filter(d => d.logged && !d.partial);
     const under = completed.filter(d => d.under).length;
@@ -411,7 +413,7 @@
       days: list, completedCount: completed.length, underCount: under, total: Math.round(total),
       avg: completed.length ? Math.round(total / completed.length) : null,
       expectedKg: total / KCAL_PER_KG, actualKg: t0 != null && t1 != null ? t1 - t0 : null,
-      streakUnder, best, today: list[list.length - 1]
+      streakUnder, best, today: list[list.length - 1], gain: !!(list.length && list[list.length - 1].gain)
     };
   }
 
@@ -437,7 +439,7 @@
     } else if (a.change7 != null && a.toward(a.change7) > 0.05) {
       add(['', uAbs(a.change7, u) + ' ' + u + (a.change7 < 0 ? ' down' : ' up'), ' in the last 7 days. Keep that rhythm.']);
     }
-    if (da.completedCount >= 2) add(['You stayed under budget ', da.underCount + ' of ' + da.completedCount + ' days', ' this week.']);
+    if (da.completedCount >= 2) add([da.gain ? 'You hit your calorie target ' : 'You stayed under budget ', da.underCount + ' of ' + da.completedCount + ' days', ' this week.']);
     if (da.completedCount >= 2 && da.total > 0) add(['This week’s deficit of ', int(da.total) + ' kcal', ' is about ' + uAbs(da.expectedKg, u) + ' ' + u + ' of fat.']);
     if (a.best30) add(['', (a.dir < 0 ? 'Lowest' : 'Highest') + ' weight in 30 days', '. The trend is real.']);
     const nx = a.milestones.next;
