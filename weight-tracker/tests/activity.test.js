@@ -154,7 +154,7 @@ const MOCK = () => {
   await page.click('.dialog-card [data-a="1"]');
   await page.waitForTimeout(400);
   ok(await page.evaluate(() => !M.store.findItem('workouts', 'wo1')), 'workout deleted');
-  await page.click('.toast-act');
+  await page.click('.toast:last-child .toast-act');
   await page.waitForTimeout(200);
   ok(await page.evaluate(() => !!M.store.findItem('workouts', 'wo1')), 'undo restores workout');
 
@@ -196,7 +196,7 @@ const MOCK = () => {
   ok(w1 && w1.t === Date.UTC(2026, 10, 1, 22, 5), 'parser: start_time UTC');
   ok(parsed.workouts.some(w => w.type === 'strength' && w.kcal === 180), 'parser: quoted start_time + strength code');
   ok(parsed.files.skipped.length === 1, 'parser: unrelated file skipped');
-  await page.click('.layer.open .seg-btn:has-text("Everything")');
+  await page.click('.layer.open .seg-btn:has-text("All")');
   await page.waitForTimeout(350);
   await check(page, 'sheet export preview');
   if (OUT) await page.screenshot({ path: path.join(OUT, 'sheet-export-preview.png') });

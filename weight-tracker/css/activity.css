@@ -218,8 +218,8 @@
   min-height: 52px; padding: 8px 4px 0; border-top: 1px solid var(--line); font-size: 15px; font-weight: 600; color: var(--ink); text-align: left;
 }
 .act-more .muted { font-weight: 500; }
-.act-more-ic { color: var(--muted); transition: transform var(--t-med) var(--ease); flex: none; }
-.act-more[aria-expanded="true"] .act-more-ic { transform: rotate(180deg); }
+.act-more-ic { color: var(--muted); transition: transform var(--t-med) var(--ease); flex: none; transform: rotate(90deg); }
+.act-more[aria-expanded="true"] .act-more-ic { transform: rotate(-90deg); }
 .act-more-body { display: flex; flex-direction: column; gap: var(--s-5); margin-top: -8px; }
 .act-del { color: var(--danger); }
 .act-del:hover { background: var(--danger-tint); color: var(--danger); }

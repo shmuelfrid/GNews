@@ -158,7 +158,7 @@
     const sp = splitNote(w.note);
     const sub = [U.fmtTime(w.t), w.minutes ? U.minutes(w.minutes) : '', fin(w.distanceKm) ? M.units.dist(w.distanceKm) : '', fin(w.avgHr) ? w.avgHr + ' bpm' : ''].filter(Boolean).join(' · ');
     const detail = [sp.speed != null ? sp.speed + ' ' + sp.unit + ' · ' + sp.incline + '% incline' : '', sp.note].filter(Boolean).join(' · ');
-    const tag = w.countedInSamsung ? '<span class="act-tag sam">' + M.icon('phone', 'xs') + '<span>Counted in Samsung Health, not added again</span></span>'
+    const tag = w.countedInSamsung ? '<span class="act-tag sam">' + M.icon('phone', 'xs') + '<span>Already in Samsung Health</span></span>'
       : '<span class="act-tag">' + (w.source === 'photo' ? 'From photo' : w.source === 'samsung-export' ? 'Samsung export' : 'Added manually') + '</span>';
     return '<button type="button" class="act-wo" data-act-edit="' + esc(w.id) + '" aria-label="' + esc('Edit ' + (w.name || typeLabel(w.type)) + ', ' + U.int(w.kcal) + ' kcal') + '">' +
       '<span class="act-wo-ic" aria-hidden="true">' + M.icon(TYPE_ICON[C.workoutType(w.type).id] || 'flame') + '</span>' +
@@ -234,7 +234,7 @@
     }));
     const opts = {
       bars, height: 168, valueFmt: U.int, labels: 'auto',
-      ref: avg != null ? { value: avg, label: 'avg ' + U.int(avg) } : null,
+      ref: avg != null ? { value: avg, label: '' } : null,
       ariaLabel: 'Active calories per day: ' + bars.map(b => b.label + ' ' + U.int(b.value)).join(', ') + (avg != null ? '. Average ' + U.int(avg) + '.' : ''),
       tip: b => {
         const d = b._d;
@@ -420,7 +420,7 @@
         const kcalF = '<div class="field"><div class="act-kcal-head"><label class="label" for="wf-kcal">Calories burned</label><button type="button" class="link-btn" data-w="estimate"' + (s.estimated ? ' aria-pressed="true"' : '') + '>' + M.icon('sparkle', 'sm') + 'Estimate for me</button></div>' +
           '<div class="input-wrap"><input class="input num-input act-kcal-in" id="wf-kcal" inputmode="numeric" autocomplete="off" placeholder="0" value="' + (fin(k) ? k : '') + '" aria-describedby="wf-kcal-help"><span class="suffix">kcal</span></div>' +
           '<p class="hint" id="wf-kcal-help" data-slot="kcal-help">' + esc(kcalHelp()) + '</p><p class="error-text" id="wf-kcal-err" hidden></p></div>';
-        const more = '<button type="button" class="act-more" data-w="more" aria-expanded="' + s.more + '"><span>More details <span class="muted">(optional)</span></span>' + M.icon('down', 'sm act-more-ic') + '</button>' +
+        const more = '<button type="button" class="act-more" data-w="more" aria-expanded="' + s.more + '"><span>More details <span class="muted">(optional)</span></span>' + M.icon('chevron', 'sm act-more-ic') + '</button>' +
           (s.more ? '<div class="act-more-body">' +
             '<div class="field-row">' +
             ui.field({ id: 'wf-dist', label: 'Distance', input: '<div class="input-wrap"><input class="input num-input" id="wf-dist" inputmode="decimal" autocomplete="off" placeholder="0.0" value="' + (fin(s.distance) ? s.distance : '') + '"><span class="suffix">' + M.units.distUnit() + '</span></div>' }) +
@@ -544,7 +544,7 @@
           const saved = M.store.addItem('workouts', item);
           sheet.close();
           ui.toast(s.counted ? 'Workout saved. Its calories were already counted.' : 'Workout added: +' + U.int(k) + ' kcal burned', saved ? { action: { label: 'Undo', fn: () => M.store.removeItem('workouts', saved.id) } } : {});
-          if (s.date !== today() && location.hash.indexOf('#activity') === 0) M.go('activity', { date: s.date });
+          if (s.date !== today() && location.hash.indexOf('#activity') === 0) { const k = s.date; setTimeout(() => M.go('activity', { date: k }), 120); }
         }
       }
       async function del() {
@@ -738,7 +738,7 @@
   /* =====================================================================
      SAMSUNG IMPORT SHEET (screenshot | data export | manual)
      ===================================================================== */
-  const RANGES = [{ value: '30', label: '30 days' }, { value: '90', label: '90 days' }, { value: '365', label: '1 year' }, { value: 'all', label: 'Everything' }];
+  const RANGES = [{ value: '30', label: '30 days' }, { value: '90', label: '90 days' }, { value: '365', label: '1 year' }, { value: 'all', label: 'All' }];
   const activitySheet = {
     open(opts) {
       opts = opts || {};
@@ -961,7 +961,7 @@
         sheet.close();
         const kc = act.activeKcal != null ? act.activeKcal : Math.round((act.steps || 0) * C.stepKcal(bodyKg()));
         ui.toast('Saved ' + (act.steps != null ? U.int(act.steps) + ' steps' : U.int(kc) + ' active kcal') + ' for ' + dayWord(key).replace(/^on /, ''), { action: { label: 'Undo', fn: () => { undo(); if (woUndo) woUndo(); } } });
-        if (key !== today() && location.hash.indexOf('#activity') === 0) M.go('activity', { date: key });
+        if (key !== today() && location.hash.indexOf('#activity') === 0) setTimeout(() => M.go('activity', { date: key }), 120);
       }
       async function clearDay() {
         const ok = await ui.confirm({ title: 'Clear this day’s steps?', body: 'Steps and active calories for ' + dayWord(s.date).replace(/^on /, '') + ' will be removed. Workouts stay.', ok: 'Clear', danger: true });
