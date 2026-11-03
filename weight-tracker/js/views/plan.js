@@ -329,7 +329,7 @@
       scen = '<div class="plan-scen" role="radiogroup" aria-label="Choose your pace">' + sc.map(s => {
         const on = draft.date === s.date;
         return '<button type="button" class="plan-sc' + (on ? ' is-on' : '') + '" role="radio" aria-checked="' + on + '" data-scen="' + esc(s.date) + '">' +
-          '<span class="plan-sc-l"><span class="plan-sc-name">' + esc(s.label) + (!s.safe ? ' <span class="badge warn plan-sc-badge">Too fast</span>' : '') + '</span><span class="plan-sc-pace">' + esc(M.units.abs(s.kgPerWeek) + ' ' + u + ' / week') + '</span></span>' +
+          '<span class="plan-sc-l"><span class="plan-sc-name">' + esc(s.label) + (!s.safe ? ' <span class="badge warn plan-sc-badge">' + (s.kgPerWeek > P.maxSafeKgPerWeek + 1e-9 ? 'Too fast' : 'Low budget') + '</span>' : '') + '</span><span class="plan-sc-pace">' + esc(M.units.abs(s.kgPerWeek) + ' ' + u + ' / week') + '</span></span>' +
           '<span class="plan-sc-r"><span class="plan-sc-date">' + esc(dateL(s.date)) + '</span><span class="plan-sc-budget">' + (fin(s.budget) ? esc(U.int(s.budget) + ' kcal / day') : '') + '</span></span>' +
           '</button>';
       }).join('') + '</div>';

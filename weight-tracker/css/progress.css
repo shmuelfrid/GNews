@@ -5,6 +5,7 @@
    PROGRESS
    ===================================================================== */
 .prog-head { align-items: center; }
+.prog-head .ph-text { flex: 1 1 auto; }
 .prog-head .ph-actions { flex: none; }
 .prog-range .seg-btn { min-width: 44px; padding: 0 12px; min-height: 36px; }
 

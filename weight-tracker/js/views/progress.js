@@ -125,9 +125,10 @@
     const inRange = a.series.filter(d => d.key >= w.from);
     let title, sub;
     // takeaway title
-    if (a.goalReached) title = 'Goal reached at ' + M.units.n(a.goalKg) + ' ' + u;
-    else if (a.projKey) title = 'On pace for ' + M.units.n(a.goalKg) + ' ' + u + ' by ' + dateS(a.projKey);
-    else if (a.series.length >= 2) title = M.units.abs(a.remaining) + ' ' + u + ' to go to ' + M.units.n(a.goalKg) + ' ' + u;
+    const g = M.units.n(a.goalKg).replace(/\.0$/, '');
+    if (a.goalReached) title = 'Goal reached at ' + g + ' ' + u;
+    else if (a.projKey) title = 'On pace for ' + g + ' ' + u + ' by ' + dateS(a.projKey);
+    else if (a.series.length >= 2) title = M.units.abs(a.remaining) + ' ' + u + ' to go to ' + g + ' ' + u;
     else title = 'Your weight trend';
     // range sub
     const first = inRange[0], last = inRange[inRange.length - 1];
@@ -178,7 +179,9 @@
     const showGoal = range === 'All' || !!projection || Math.abs(disp(a.current) - disp(a.goalKg)) < (range === '1W' ? 4 : 12);
     const byKey = {};
     series.forEach(d => { byKey[d.key] = d; });
-    const yd = u === 'kg' ? 1 : 0;
+    const vis = dots.concat(line).filter(p => p.key >= w.from).map(p => p.y).concat(showGoal ? [disp(a.goalKg)] : []);
+    const spanY = vis.length ? Math.max.apply(null, vis) - Math.min.apply(null, vis) : 10;
+    const yd = spanY < 6 ? 1 : 0;
     const c = M.charts.lineChart(host, {
       dots, line, projection,
       projectionLabel: projection && U.diffDays(w.today, a.projKey) <= U.diffDays(w.today, to) ? U.fmtDate(a.projKey) : '',
@@ -258,9 +261,14 @@
     if (!host) return;
     const n = da.days.length;
     const target = da.today ? da.today.target : 0;
-    const bars = da.days.map(d => ({
+    // keep the regular date labels clear of the "Today" label (the chart thins labels every k bars)
+    const W = host.clientWidth || 320;
+    const refPad = target > 0 && W >= 480 ? ('Goal ' + U.int(target)).length * 7 + 20 : 8;
+    const slot = Math.max(1, (W - 8 - refPad) / n);
+    const every = Math.max(1, Math.ceil(46 / slot));
+    const bars = da.days.map((d, i) => ({
       key: d.key,
-      label: d.partial ? 'Today' : n <= 7 ? U.fmtDate(d.key, { weekday: 'short' }) : U.fmtDate(d.key),
+      label: d.partial ? 'Today' : (n > 7 && i > n - 1 - every) ? '' : n <= 7 ? U.fmtDate(d.key, { weekday: 'short' }) : U.fmtDate(d.key),
       value: d.logged ? d.deficit : 0,
       highlight: d.partial,
       muted: d.partial
@@ -340,7 +348,6 @@
       key: w.start,
       label: w.partial ? 'This wk' : U.fmtDate(w.start),
       value: +disp(w.change).toFixed(2),
-      highlight: w === a.bestWeek,
       muted: w.partial
     }));
     const good = 'var(--d-deficit)', bad = 'var(--d-surplus)';
@@ -383,7 +390,7 @@
     }
     const wd = weekdayPattern(a);
     if (wd) {
-      const name = U.fmtDate(U.addDays('2026-11-01', wd), { weekday: 'long' }); // 2026-11-01 is a Sunday
+      const name = U.fmtDate(U.addDays('2026-11-01', wd.wd), { weekday: 'long' }); // 2026-11-01 is a Sunday
       rows.push({ icon: 'calendar', tone: 'brand', title: name + 's are your lightest day', sub: 'On average ' + M.units.abs(wd.m) + ' ' + u + ' ' + (wd.m < 0 ? 'under' : 'over') + ' your trend. Weekends usually show the opposite.' });
     }
     if (!rows.length) {
@@ -413,11 +420,14 @@
     let list;
     if (showAllMs) list = all;
     else {
-      const earned = all.filter(m => m.earned).sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, 2).reverse();
-      const nextW = ms.weight.filter(m => !m.earned).slice(0, 2);
+      const nextS0 = ms.streaks.filter(m => !m.earned).length ? 1 : 0;
+      const nextW0 = ms.weight.filter(m => !m.earned).slice(0, 2);
+      const earned = all.filter(m => m.earned).sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, Math.max(1, 4 - nextS0 - nextW0.length)).reverse();
+      const nextW = nextW0.slice(0, 4 - nextS0 - earned.length);
       const nextS = ms.streaks.filter(m => !m.earned).slice(0, 1);
       list = earned.concat(nextW, nextS);
       if (list.length < 4) list = list.concat(all.filter(m => !list.includes(m)).slice(0, 4 - list.length));
+      list = list.slice(0, 4);
     }
     const nx = ms.next;
     const earnedN = all.filter(m => m.earned).length;
