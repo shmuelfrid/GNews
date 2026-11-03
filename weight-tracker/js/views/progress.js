@@ -235,7 +235,9 @@
     // expected vs actual
     let compare = '';
     if (da.completedCount >= 3 && fin(da.actualKg)) {
-      const exp = -da.expectedKg; // deficit -> expected weight change (negative = loss)
+      // deficit -> expected weight change (negative = loss). The scale spans all n days, so scale the average logged
+      // day up to n days instead of comparing n days of weight with only the days that have food logged.
+      const exp = fin(da.avg) ? -(da.avg * n / C.KCAL_PER_KG) : -da.expectedKg;
       const act = da.actualKg;
       const diff = act - exp;
       let note;
@@ -244,7 +246,7 @@
       else note = losing ? 'The scale is lagging your deficit. Water, salt and a heavier workout can hide fat loss for a week or two; the fat loss is still happening.' : 'The scale is lagging your surplus. Daily water swings can hide a gain for a week or two; keep eating to your target.';
       compare = '<div class="prog-compare">' +
         '<div class="prog-compare-grid">' +
-        '<div class="prog-cmp"><p class="prog-cmp-l">Expected from ' + (losing ? 'deficit' : 'surplus') + '</p><p class="prog-cmp-v">' + v(M.units.signed(exp), u) + '</p></div>' +
+        '<div class="prog-cmp"><p class="prog-cmp-l">Expected from ' + (losing ? 'deficit' : 'surplus') + (da.completedCount < n - 1 ? ', ' + da.completedCount + ' logged days' : '') + '</p><p class="prog-cmp-v">' + v(M.units.signed(exp), u) + '</p></div>' +
         '<div class="prog-cmp"><p class="prog-cmp-l">Scale trend, ' + n + ' days</p><p class="prog-cmp-v">' + v(M.units.signed(act), u) + '</p></div>' +
         '</div><p class="prog-cmp-note">' + M.icon('info', 'sm') + '<span>' + esc(note) + '</span></p></div>';
     }

@@ -96,13 +96,14 @@
     }).join('');
     const excluded = b.workoutsExcluded > 0 ? '<p class="act-fine">' + M.icon('info', 'xs') + '<span>' + U.int(b.workoutsExcluded) + ' kcal of workouts are already inside your Samsung Health active calories, so they aren’t added twice.</span></p>' : '';
     let outlook = '';
-    if (isToday && b.burnExpected > b.burnSoFar) outlook = '<p class="act-outlook">On track for about <b>' + U.int(b.burnExpected) + ' kcal</b> by the end of today.</p>';
+    if (isToday && b.burnExpected > b.burnSoFar) outlook = '<p class="act-outlook">On track for about <b>' + U.int(b.burnExpected) + ' kcal</b> by the end of today' +
+      (b.activeFromBaseline && !b.hasActivity ? ', counting the usual activity you set up (' + U.int(b.activeExpected) + ' kcal) until you import your steps.' : '.') + '</p>';
     // motivation: extra burn needed to hit today's target deficit
     let push = '';
     if (isToday && b.hasFood) {
       const ta = M.data.todayActions();
       const ex = ta && ta.extraBurnForTarget;
-      if (ex && ex.kcal >= 20) push = '<div class="act-push"><span class="ic-bubble teal sm">' + M.icon('flame') + '</span><div class="act-push-t"><p class="act-push-h">Burn ' + U.int(ex.kcal) + ' more kcal to hit today’s target</p><p class="act-push-s">≈ ' + ex.treadmillMin + ' min on the treadmill (3.5 mph, 5%) or ≈ ' + U.int(ex.steps) + ' extra steps</p></div></div>';
+      if (ex && ex.kcal >= 20) push = '<div class="act-push"><span class="ic-bubble teal sm">' + M.icon('flame') + '</span><div class="act-push-t"><p class="act-push-h">Burn ' + U.int(ex.kcal) + ' more kcal to hit today’s target</p><p class="act-push-s">≈ ' + ex.treadmillMin + ' min on the treadmill (' + (M.units.unit === 'kg' ? '5.6 km/h' : '3.5 mph') + ', 5%) or ≈ ' + U.int(ex.steps) + ' extra steps</p></div></div>';
     }
     return '<section class="card hero act-burn" aria-labelledby="act-burn-t">' +
       '<p class="t-over act-over" id="act-burn-t">' + (isToday ? 'Burned so far today' : 'Burned ' + esc(dayWord(key))) + '</p>' +
@@ -338,6 +339,7 @@
         Object.assign(s, {
           type: C.workoutType(existing.type).id, name: existing.name || '', date: U.keyOf(existing.t), time: U.hhmm(existing.t), minutes: existing.minutes || null,
           kcal: existing.kcal, estimated: false, distance: fin(existing.distanceKm) ? round1(M.units.distTo(existing.distanceKm)) : null, hr: existing.avgHr || null,
+          distKm: fin(existing.distanceKm) ? existing.distanceKm : null, distShown: fin(existing.distanceKm) ? round1(M.units.distTo(existing.distanceKm)) : null,
           note: sp.note, counted: !!existing.countedInSamsung, source: existing.source || 'manual', thumb: existing.thumb || null
         });
         if (sp.speed != null) { s.speed = sp.speed; s.incline = sp.incline; }
@@ -485,11 +487,21 @@
           if (fin(r.minutes)) s.minutes = Math.round(r.minutes);
           if (fin(r.kcal)) { s.kcal = r.kcal; s.estimated = false; } else s.estimated = true;
           s.distance = fin(r.distanceKm) ? round1(M.units.distTo(r.distanceKm)) : null;
+          s.distKm = fin(r.distanceKm) ? r.distanceKm : null; s.distShown = s.distance;   // keep exact km unless the user edits it
           s.hr = fin(r.avgHr) ? Math.round(r.avgHr) : null;
           if (r.date && r.date <= today()) s.date = r.date;
           if (r.time) s.time = r.time.length === 4 ? '0' + r.time : r.time;
           s.note = r.note || ''; s.confidence = r.confidence; s.source = 'photo';
-          if (isTreadmill(s.type) && s.speed == null) { s.speed = TM_DEFAULT[s.type][u][0]; s.incline = TM_DEFAULT[s.type][u][1]; }
+          // speed / incline only when the photo showed them (no silent defaults that would read as measured)
+          s.speed = null; s.incline = null;
+          if (isTreadmill(s.type)) {
+            const sp = /(\d+(?:\.\d+)?)\s*(mph|km\/h|kph)/i.exec(s.note), inc = /(\d+(?:\.\d+)?)\s*%/.exec(s.note);
+            if (sp) {
+              const v = +sp[1], mph = /mph/i.test(sp[2]);
+              s.speed = round1(isLb() ? (mph ? v : v / 1.609344) : (mph ? v * 1.609344 : v)); s.incline = inc ? +inc[1] : 0;
+              s.note = s.note.replace(sp[0], '').replace(inc ? inc[0] : /$^/, '').replace(/incline/i, '').replace(/^[\s,·;@]+|[\s,·;@]+$/g, '').replace(/\s*[,·;]\s*[,·;]\s*/g, ', ');
+            }
+          }
           if (!fin(s.kcal) && !(s.minutes > 0)) ui.toast('No calories were visible. Add them, or switch to the form to estimate.');
           s.stage = 'review';
           paint();
@@ -532,7 +544,7 @@
         if (t > Date.now()) t = Date.now();
         const item = {
           type: s.type, name: s.source === 'photo' && s.name ? s.name : typeLabel(s.type), minutes: fin(s.minutes) ? Math.max(0, Math.round(s.minutes)) : 0,
-          kcal: Math.round(k), t, distanceKm: fin(s.distance) && s.distance > 0 ? M.units.distFrom(s.distance) : null,
+          kcal: Math.round(k), t, distanceKm: fin(s.distance) && s.distance > 0 ? (fin(s.distKm) && s.distance === s.distShown ? s.distKm : M.units.distFrom(s.distance)) : null,
           avgHr: fin(s.hr) ? s.hr : null, note: joinNote(s.type, s.speed, s.incline, s.note), source: s.source, countedInSamsung: !!s.counted
         };
         if (s.thumb) item.thumb = s.thumb;
@@ -730,6 +742,10 @@
       if (su && fin(su.activeMs)) o.activeMinutes = Math.round(su.activeMs / 60000);
       if (Object.keys(o).length) days[k] = o;
     });
+    // Was each session already inside Samsung's active calories for its day? The daily activity summary includes
+    // exercise; step-only calories include walks and runs (they are steps) but not cycling, swimming, weights, yoga…
+    const STEP_BASED = ['walk', 'run', 'treadmill_walk', 'treadmill_run'];
+    workouts.forEach(w => { const k = U.keyOf(w.t), d = days[k]; w.countedInSamsung = !!(d && fin(d.activeKcal) && (summary[k] || STEP_BASED.includes(w.type))); });
     const all = Object.keys(days).concat(workouts.map(w => U.keyOf(w.t))).sort();
     return { days, workouts, files: used, from: all[0] || null, to: all[all.length - 1] || null };
   }
@@ -752,7 +768,7 @@
       function loadManual() {
         const a = M.store.getDay(s.date).activity;
         s.steps = a && fin(a.steps) ? a.steps : null; s.activeKcal = a && fin(a.activeKcal) ? a.activeKcal : null;
-        s.distance = a && fin(a.distanceKm) ? round1(M.units.distTo(a.distanceKm)) : null; s.activeMinutes = a && fin(a.activeMinutes) ? a.activeMinutes : null;
+        s.distance = a && fin(a.distanceKm) ? round1(M.units.distTo(a.distanceKm)) : null; s.distKm = a && fin(a.distanceKm) ? a.distanceKm : null; s.distShown = s.distance; s.activeMinutes = a && fin(a.activeMinutes) ? a.activeMinutes : null;
         s.totalKcal = a && fin(a.totalKcal) ? a.totalKcal : null;
       }
       if (s.mode === 'manual') loadManual();
@@ -825,7 +841,7 @@
           '<div><dt>Workouts</dt><dd>' + U.int(sel.workouts.length) + '</dd></div>' +
           '<div><dt>Files read</dt><dd>' + U.int(r.files.steps + r.files.summary + r.files.exercise) + '<small> of ' + s.exp.names.length + '</small></dd></div></dl></div>' +
           '<div class="field"><p class="label" id="sx-range-l">How far back</p><div data-slot="range"></div></div>' +
-          '<p class="hint">Days you already have are updated with these numbers. Workouts are listed as already counted in Samsung Health, so they aren’t added twice.</p>' +
+          '<p class="hint">Days you already have are updated with these numbers. ' + (function () { const nc = sel.workouts.filter(w => !w.countedInSamsung).length; return !sel.workouts.length ? '' : !nc ? 'Workouts are listed as already counted in Samsung Health, so they aren’t added twice.' : U.plural(nc, 'workout') + ' (like cycling or weights) aren’t in Samsung’s step calories, so ' + (nc === 1 ? 'it adds' : 'they add') + ' to your burn; the rest are already counted.'; })() + '</p>' +
           '<button type="button" class="link-btn" data-s="files">' + M.icon('upload', 'sm') + 'Choose different files</button>';
       }
       function filterResult(r) {
@@ -891,7 +907,7 @@
           if (ctl !== s.ctl || sheet.closed) return;
           s.ctl = null;
           s.date = validPast(r.date); s.steps = r.steps; s.activeKcal = r.activeKcal; s.totalKcal = r.totalKcal;
-          s.activeMinutes = fin(r.activeMinutes) ? Math.round(r.activeMinutes) : null; s.distance = fin(r.distanceKm) ? round1(M.units.distTo(r.distanceKm)) : null;
+          s.activeMinutes = fin(r.activeMinutes) ? Math.round(r.activeMinutes) : null; s.distance = fin(r.distanceKm) ? round1(M.units.distTo(r.distanceKm)) : null; s.distKm = fin(r.distanceKm) ? r.distanceKm : null; s.distShown = s.distance;
           s.workouts = r.workouts || []; s.confidence = r.confidence;
           if (s.steps == null && s.activeKcal == null) ui.toast('No steps or active calories were visible. Fill them in or try another screenshot.');
           s.stage = 'review'; paint();
@@ -948,7 +964,7 @@
         if (s.activeKcal != null) act.activeKcal = Math.round(s.activeKcal);
         if (s.totalKcal != null && s.mode === 'screenshot') act.totalKcal = Math.round(s.totalKcal);
         if (s.activeMinutes != null) act.activeMinutes = Math.round(s.activeMinutes);
-        if (s.distance != null && s.distance > 0) act.distanceKm = M.units.distFrom(s.distance);
+        if (s.distance != null && s.distance > 0) act.distanceKm = fin(s.distKm) && s.distance === s.distShown ? s.distKm : M.units.distFrom(s.distance);
         const undo = M.store.setActivity(s.date, act);
         let woUndo = null;
         if (s.mode === 'screenshot' && s.addWorkouts && s.workouts.length) {

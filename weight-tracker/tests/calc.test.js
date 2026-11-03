@@ -172,5 +172,85 @@ t('headlines escape html', () => {
   H.forEach(h => assert.ok(!/<(?!\/?b>)/.test(h.html), h.html));
 });
 
+/* ---- QA additions: independent hand-computed values + regressions ---- */
+t('BMR female hand-computed (Mifflin–St Jeor)', () => {
+  // 10×70 + 6.25×163 − 5×41 − 161 = 700 + 1018.75 − 205 − 161 = 1352.75
+  assert.strictEqual(C.bmr('female', 70, 163, 41), 1353);
+  assert.strictEqual(C.bmrFor({ sex: 'female', heightCm: 163, birthYear: 1985 }, 70, NOW), 1353);
+});
+t('age clamps and uses calendar year', () => { assert.strictEqual(C.age(2026, NOW), 10); assert.strictEqual(C.age('1990', NOW), 36); assert.strictEqual(C.age(undefined, NOW), null); });
+t('dayFraction across DST end (25-hour day)', () => {
+  const t = new Date(2026, 10, 1, 12, 0).getTime();   // Nov 1 2026, noon; day has 25 h in America/New_York
+  near(C.dayFraction('2026-11-01', t), 13 / 25, 0.001);
+});
+t('equivalents: walk, run, steps rounding', () => {
+  const e = C.equivalents(500, 80);
+  assert.strictEqual(e.walkMin, Math.ceil(500 / (4.3 * 3.5 * 80 / 200)));
+  assert.strictEqual(e.runMin, Math.ceil(500 / (9.8 * 3.5 * 80 / 200)));
+  assert.strictEqual(e.steps, 12500);               // 500 / 0.04 = 12,500
+  assert.strictEqual(C.equivalents(-50, 80).treadmillMin, 0);
+});
+t('plan: needed pace from date is exact', () => {
+  const p = { sex: 'male', startKg: 100, goalKg: 90, targetDate: C.addDays(TODAY, 70), unit: 'kg' };
+  const pl = C.plan(p, { currentKg: 97, now: NOW, typicalBurn: 2500 });
+  near(pl.kgPerWeek, 0.7, 1e-9); near(pl.kgPerDay, 0.1, 1e-9);
+  assert.strictEqual(pl.kcalPerDay, 770); assert.strictEqual(pl.targetDeficit, 770); assert.strictEqual(pl.budget, 1730);
+  assert.ok(!pl.tooFast);                          // 0.7 ≤ 1% of 97
+  assert.ok(C.plan(Object.assign({}, p, { targetDate: C.addDays(TODAY, 35) }), { currentKg: 97, now: NOW, typicalBurn: 2500 }).tooFast);
+});
+t('plan: target date in the past -> pastTarget + default pace', () => {
+  const pl = C.plan(Object.assign({}, profile, { targetDate: '2026-10-01' }), { currentKg: 193.6 * LB, now: NOW, typicalBurn: 2300 });
+  assert.ok(pl.pastTarget); near(pl.kgPerWeek, LB, 1e-9); assert.ok(pl.safeDate);
+});
+t('balance: budget is capped at the safe floor (never "eat under 458")', () => {
+  const p = Object.assign({}, profile, { sex: 'female', targetDate: C.addDays(TODAY, 21) });
+  const b = C.balance(p, days, TODAY, NOW);
+  assert.ok(b.belowFloor); assert.ok(b.rawBudget < 1200); assert.strictEqual(b.budget, 1200);
+  assert.strictEqual(b.left, 1200 - b.eaten);
+});
+t('balance: no activity history uses onboarding baseline for expected burn only', () => {
+  const p = { sex: 'male', birthYear: 1992, heightCm: 178, startKg: 90, goalKg: 80, unit: 'kg', activityBaseline: 'high' };
+  const b = C.balance(p, {}, TODAY, NOW);
+  assert.strictEqual(b.activeExpected, 550); assert.ok(b.activeFromBaseline);
+  assert.strictEqual(b.burnExpected, b.bmr + 550); assert.strictEqual(b.burnSoFar, b.resting);   // so-far stays measured
+  assert.strictEqual(b.budget, b.bmr + 550 - b.targetDeficit);
+  const withData = C.balance(p, { [C.addDays(TODAY, -1)]: { activity: { activeKcal: 200 } } }, TODAY, NOW);
+  assert.strictEqual(withData.activeExpected, 200); assert.ok(!withData.activeFromBaseline);
+});
+t('gain goal: target met = ate at least the budget; no "burn it off" advice', () => {
+  const p = { sex: 'male', birthYear: 1992, heightCm: 178, startKg: 60, goalKg: 66, targetDate: C.addDays(TODAY, 120), unit: 'kg' };
+  const d = {};
+  for (let i = 1; i <= 3; i++) { const k = C.addDays(TODAY, -i); d[k] = { weights: [{ id: 'w' + i, kg: 61, t: C.fromKey(k).getTime() + 7 * 3600e3 }], foods: [{ id: 'f' + i, kcal: i === 1 ? 1500 : 3500, t: C.fromKey(k).getTime() + 12 * 3600e3 }], activity: { activeKcal: 300 } }; }
+  d[TODAY] = { foods: [{ id: 'ft', kcal: 3900, t: NOW - 3600e3 }] };
+  const b = C.balance(p, d, TODAY, NOW);
+  assert.ok(b.gain); assert.ok(b.targetDeficit < 0); assert.ok(b.over);
+  assert.strictEqual(C.todayActions(b).burnToFix.kcal, 0);
+  const da = C.deficitAnalysis(p, d, NOW, 7);
+  assert.ok(da.gain); assert.strictEqual(da.completedCount, 3); assert.strictEqual(da.underCount, 2);   // the 1,500 kcal day missed
+  assert.ok(C.headlines(p, d, NOW).some(h => /calorie target/.test(h.text)));
+});
+t('deficit analysis: expected vs actual, streak under', () => {
+  const da = C.deficitAnalysis(profile, days, NOW, 7);
+  const s = C.dailyWeights(days);
+  near(da.actualKg, C.trendAt(s, TODAY) - C.trendAt(s, C.addDays(TODAY, -7)), 1e-12);
+  assert.strictEqual(da.total, da.days.filter(x => x.logged && !x.partial).reduce((a, x) => a + x.deficit, 0));
+  assert.strictEqual(da.streakUnder, 3);   // last 3 days under; the 2,600 kcal day 4 days ago was over
+});
+t('weekly changes chain from start weight and sum to total', () => {
+  const a = C.weightAnalysis(profile, days, NOW);
+  const sum = a.weeks.reduce((x, w) => x + w.change, 0);
+  near(sum, a.current - profile.startKg, 1e-9);
+});
+t('milestones: every 5 lb, halfway, decades, goal, in journey order', () => {
+  const a = C.weightAnalysis(profile, days, NOW);
+  const ids = a.milestones.weight.map(m => m.id);
+  ['amt-lb-5', 'amt-lb-10', 'amt-lb-15', 'amt-lb-20', 'amt-lb-25', 'amt-lb-30', 'half', 'dec-lb-210', 'dec-lb-200', 'dec-lb-190', 'goal'].forEach(id => assert.ok(ids.includes(id), id));
+  assert.strictEqual(ids[ids.length - 1], 'goal');
+  const m15 = a.milestones.weight.find(m => m.id === 'amt-lb-15');
+  const first = a.series.find(d => d.trend <= (212 - 15) * LB + 1e-9);
+  assert.strictEqual(m15.date, first.key);
+  const half = a.milestones.weight.find(m => m.id === 'half'); near(half.targetKg, 196 * LB, 1e-9);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

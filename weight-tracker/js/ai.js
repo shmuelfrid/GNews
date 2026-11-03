@@ -120,9 +120,9 @@
   function normFood(r) {
     r = r && typeof r === 'object' ? r : {};
     const items = (Array.isArray(r.items) ? r.items : []).map(it => ({
-      name: String(it && it.name || 'Item').slice(0, 120), portion: String(it && it.portion || '').slice(0, 80),
+      name: String(it && it.name || '').trim().slice(0, 120), portion: String(it && it.portion || '').slice(0, 80),
       kcal: Math.round(n(it && it.kcal, 0, 10000) || 0), protein: n(it && it.protein, 0, 1000), carbs: n(it && it.carbs, 0, 1000), fat: n(it && it.fat, 0, 1000)
-    })).filter(it => it.name);
+    })).filter(it => it.name || it.kcal > 0).map(it => (it.name ? it : Object.assign(it, { name: 'Item' })));   // drop blank 0-kcal rows
     const sum = k => items.reduce((s, it) => s + (it[k] || 0), 0);
     return {
       name: String(r.name || (items[0] && items[0].name) || '').slice(0, 160), items,

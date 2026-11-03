@@ -146,7 +146,7 @@
       '<p class="ob-pv-sub">' + (lose ? 'Lose ' : 'Gain ') + fmt1(M.units.to(pl.remainingKg, u)) + ' ' + u + (date ? ' by <b>' + esc(date) + '</b>' : '') + '</p>' +
       '<dl class="ob-pv-grid">' +
       '<div><dt>Daily ' + (lose ? 'deficit' : 'surplus') + '</dt><dd>' + U.int(pl.kcalPerDay) + '<span>kcal</span></dd></div>' +
-      '<div><dt>Eat about</dt><dd>' + U.int(pl.budget) + '<span>kcal a day</span></dd></div>' +
+      '<div><dt>Eat about</dt><dd>' + U.int(pl.lowBudget ? pl.minKcal : pl.budget) + '<span>' + (pl.lowBudget ? 'kcal a day, the safe minimum' : 'kcal a day') + '</span></dd></div>' +
       '<div><dt>Resting burn</dt><dd>' + U.int(bmr) + '<span>kcal a day</span></dd></div>' +
       '<div><dt>Weeks to go</dt><dd>' + (pl.weeksLeft != null ? Math.max(1, Math.round(pl.weeksLeft)) : '–') + '<span>weeks</span></dd></div>' +
       '</dl></section>';

@@ -207,7 +207,8 @@
       const bw = Math.max(4, Math.min(24, slot * 0.62));
       const pos = o.posColor || css('--d-deficit'), neg = o.negColor || css('--d-surplus');
       const showAll = o.labels === 'all' || (o.labels !== 'none' && slot >= 34);
-      const labelEvery = Math.max(1, Math.ceil(36 / slot));
+      const maxLabel = bars.reduce((m, b, i) => b.highlight || i === bars.length - 1 ? m : Math.max(m, String(b.label || '').length), 0);
+      const labelEvery = Math.max(1, Math.ceil(Math.max(30, maxLabel * 7 + 10) / slot));   // never let axis labels touch
       let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(o.ariaLabel || 'Bar chart') + '">';
       const y0 = sy(0);
       s += '<line class="ch-axis" x1="' + pad.l + '" x2="' + (pad.l + iw) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '"/>';

@@ -157,7 +157,7 @@
       if (fin(b.burnExpected) && fin(b.targetDeficit)) {
         const tgt = b.targetDeficit;
         h += '<p class="food-hero-why">' + M.icon('info', 'sm') + '<span>' + U.int(b.burnExpected) + ' ' + burnWord +
-          (tgt > 0 ? ' − ' + U.int(tgt) + ' deficit goal' : tgt < 0 ? ' + ' + U.int(-tgt) + ' surplus goal' : '') + ' = <b class="nowrap">' + U.int(b.budget) + ' kcal</b> budget</span></p>';
+          (tgt > 0 ? ' − ' + U.int(tgt) + ' deficit goal' : tgt < 0 ? ' + ' + U.int(-tgt) + ' surplus goal' : '') + (b.belowFloor ? ' = ' + U.int(b.rawBudget) + ', raised to the <b class="nowrap">' + U.int(b.budget) + ' kcal</b> safe minimum' : ' = <b class="nowrap">' + U.int(b.budget) + ' kcal</b> budget') + '</span></p>';
       }
     }
     const hasMacros = (b.protein || 0) + (b.carbs || 0) + (b.fat || 0) > 0;
@@ -168,12 +168,12 @@
     if (over && isToday) {
       const eq = M.calc.equivalents(-left, b.kg);
       if (eq && fin(eq.treadmillMin) && eq.treadmillMin > 0) {
-        h += '<div class="notice warn food-hero-note">' + M.icon('flame') + '<div>A <b class="nowrap">' + U.minutes(eq.treadmillMin) + '</b> treadmill walk (3.5 mph, 5% incline) burns the extra ' + U.int(-left) + ' kcal' +
+        h += '<div class="notice warn food-hero-note">' + M.icon('flame') + '<div>A <b class="nowrap">' + U.minutes(eq.treadmillMin) + '</b> treadmill walk (' + (M.units.unit === 'kg' ? '5.6 km/h' : '3.5 mph') + ', 5% incline) burns the extra ' + U.int(-left) + ' kcal' +
           (eq.treadmillMin > 60 ? '. Big days happen: easing off a little over the next few days evens it out.' : fin(eq.steps) && eq.steps > 0 ? ', or about <b class="nowrap">' + U.int(Math.round(eq.steps / 100) * 100) + '</b> extra steps.' : '.') + '</div></div>';
       }
     }
     if (b.belowFloor && isToday) {
-      h += '<div class="notice warn food-hero-note">' + M.icon('alert') + '<div>Your budget is under the safe minimum of ' + U.int(b.budgetFloor) + ' kcal. <a href="#plan">Pick a gentler pace</a>.</div></div>';
+      h += '<div class="notice warn food-hero-note">' + M.icon('alert') + '<div>Your plan needs more than food alone today: eating under ' + U.int(b.budgetFloor) + ' kcal isn’t safe, so the rest has to come from moving more. <a href="#plan">Pick a gentler pace</a>.</div></div>';
     }
     return h + '</section>';
   }
@@ -200,11 +200,11 @@
     else {
       h += '<span class="food-meal-none">' + (ctx.isToday ? 'Not logged yet' : 'Nothing logged') + '</span></div>';
       if (ctx.isToday && ctx.hasBudget) {
-        const line = hint > 0 ? mealLabel(m) + ' budget: about ' + U.int(hint) + ' kcal' : 'You’ve used today’s budget';
+        const line = hint > 0 ? esc(mealLabel(m) + ' budget: ') + '<span class="nowrap">about ' + U.int(hint) + ' kcal</span>' : esc('You’ve used today’s budget');
         const why = hint > 0
           ? (ctx.target > 0 ? 'Stay at or under it to keep today’s ' + U.int(ctx.target) + ' kcal deficit.' : 'That keeps you on plan for today.')
           : 'If you’re hungry, pick something light — a broth soup or veg is under 100 kcal.';
-        h += '<div class="food-meal-empty"><span class="food-meal-empty-ic" aria-hidden="true">' + M.icon(MEAL_ICON[m]) + '</span><div class="food-meal-empty-text"><p class="food-meal-empty-title">' + esc(line) + '</p><p class="food-meal-empty-sub">' + esc(why) + '</p></div></div>';
+        h += '<div class="food-meal-empty"><span class="food-meal-empty-ic" aria-hidden="true">' + M.icon(MEAL_ICON[m]) + '</span><div class="food-meal-empty-text"><p class="food-meal-empty-title">' + line + '</p><p class="food-meal-empty-sub">' + esc(why) + '</p></div></div>';
       }
       h += '<button type="button" class="link-btn food-add-more" data-add-meal="' + m + '">' + M.icon('plus', 'sm') + 'Add ' + mealLower(m) + '</button>';
     }

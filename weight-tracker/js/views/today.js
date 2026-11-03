@@ -72,13 +72,13 @@
         b.targetDeficit >= 0 ? { label: 'Goal deficit', dot: 'deficit', v: b.targetDeficit } : { label: 'Goal surplus', dot: 'surplus', v: -b.targetDeficit }
       ];
       foot = b.targetDeficit >= 0
-        ? 'Budget = ' + U.int(b.burnExpected) + ' expected burn − ' + U.int(b.targetDeficit) + ' goal deficit'
+        ? 'Budget = ' + U.int(b.burnExpected) + ' expected burn − ' + U.int(b.targetDeficit) + ' goal deficit' + (b.belowFloor ? ' (' + U.int(b.rawBudget) + '), raised to the ' + U.int(b.budgetFloor) + ' safe minimum' : '')
         : 'Budget = ' + U.int(b.burnExpected) + ' expected burn + ' + U.int(-b.targetDeficit) + ' goal surplus';
     }
     // desktop-only sentence: how today compares with the goal deficit
     let goalLine = '';
     if (b.belowFloor) {
-      goalLine = '<p class="notice warn today-note">' + M.icon('alert') + '<span>Your budget is under ' + nb(U.int(b.budgetFloor) + ' kcal') + '. Eat at least that much and add a walk instead, or pick a gentler pace in your plan.</span></p>';
+      goalLine = '<p class="notice warn today-note">' + M.icon('alert') + '<span>Your pace needs a budget under ' + nb(U.int(b.budgetFloor) + ' kcal') + ', which isn’t safe. Eat at least that much and move more instead, or pick a gentler pace in your plan.</span></p>';
     } else if (b.targetDeficit > 0 && !b.hasFood) {
       goalLine = '<p class="today-goalline">' + M.icon('target', 'sm') + '<span>Goal deficit is <b>' + nb(U.int(b.targetDeficit) + ' kcal') + '</b> a day. Log your meals to see how today compares.</span></p>';
     } else if (b.targetDeficit > 0) {
@@ -201,14 +201,20 @@
       const eq = ta.burnToFix;
       rows.push(checkRow({
         ring: miniRing(0, 'empty'), title: 'Burn ' + nb(U.int(b.overBy) + ' kcal') + ' to even out',
-        sub: '≈ ' + nb(eq.treadmillMin + ' min') + ' treadmill · 3.5 mph, 5%', status: 'To do', statusTone: 'warn', sheet: 'workout', opts: {}
+        sub: '≈ ' + nb(eq.treadmillMin + ' min') + ' treadmill · ' + (M.units.unit === 'kg' ? '5.6 km/h' : '3.5 mph') + ', 5%', status: 'To do', statusTone: 'warn', sheet: 'workout', opts: {}
+      }));
+    } else if (b.belowFloor && b.budget - b.rawBudget > 0) {
+      const eq = C.equivalents(b.budget - b.rawBudget, b.kg);   // the part of the goal deficit food can't safely cover
+      rows.push(checkRow({
+        ring: miniRing(0, 'empty'), title: 'Burn ' + nb(U.int(eq.kcal) + ' more kcal'),
+        sub: '≈ ' + nb(eq.treadmillMin + ' min') + ' treadmill · ' + (M.units.unit === 'kg' ? '5.6 km/h' : '3.5 mph') + ', 5% · to hit today’s goal deficit', status: 'To do', statusTone: 'warn', sheet: 'workout', opts: {}
       }));
     } else if (moved < target) {
       const eq = C.equivalents(target - moved, b.kg);
       rows.push(checkRow({
         ring: moved > 0 ? miniRing(moved / target, 'ring', 'teal') : miniRing(0, 'empty'),
         title: 'Burn ' + nb(U.int(target - moved) + ' more kcal'),
-        sub: '≈ ' + nb(eq.treadmillMin + ' min') + ' treadmill · 3.5 mph, 5%', status: 'To do', sheet: 'workout', opts: {}
+        sub: '≈ ' + nb(eq.treadmillMin + ' min') + ' treadmill · ' + (M.units.unit === 'kg' ? '5.6 km/h' : '3.5 mph') + ', 5%', status: 'To do', sheet: 'workout', opts: {}
       }));
     } else {
       rows.push(checkRow({ ring: miniRing(1, 'done'), done: true, title: 'Active goal met', sub: nb(U.int(moved) + ' kcal') + ' from steps & workouts', status: 'Done', statusTone: 'good', sheet: 'workout', opts: {} }));

@@ -230,7 +230,10 @@
     const burnSoFar = Math.round(resting + (isFuture ? 0 : act.kcal) + (isFuture ? 0 : work.kcal));
     const burnExpected = Math.round(bmrDay + activeExpected + work.kcal);
     const pl = plan(profile, { currentKg: kg, now, typicalBurn: bmrDay + (typAct != null ? Math.max(typAct, avg7 != null ? 0 : act.kcal) : act.kcal) });
-    const budget = Math.round(burnExpected - pl.targetDeficit);
+    const rawBudget = Math.round(burnExpected - pl.targetDeficit);
+    // never tell someone to eat under the safe minimum: cap the budget at the floor and let the gap show up as extra burn
+    const belowFloor = pl.dir < 0 && rawBudget < pl.minKcal;
+    const budget = belowFloor ? pl.minKcal : rawBudget;
     const left = Math.round(budget - eat.kcal);
     return {
       key, isToday, isPast, isFuture, kg, fraction: frac,
@@ -240,8 +243,8 @@
       burnSoFar, burnExpected,
       eaten: Math.round(eat.kcal), protein: eat.protein, carbs: eat.carbs, fat: eat.fat, foodCount: eat.count,
       deficitSoFar: Math.round(burnSoFar - eat.kcal), deficitExpected: Math.round(burnExpected - eat.kcal),
-      targetDeficit: pl.targetDeficit, budget, left, over: left < 0, overBy: Math.max(0, -left),
-      budgetFloor: pl.minKcal, belowFloor: pl.dir < 0 && budget < pl.minKcal,
+      targetDeficit: pl.targetDeficit, budget, rawBudget, left, over: left < 0, overBy: Math.max(0, -left),
+      budgetFloor: pl.minKcal, belowFloor,
       gain: pl.dir > 0 && !pl.goalReached, // budget is a minimum to reach, not a cap
       hasFood: eat.count > 0, hasActivity: hasActivity(day), plan: pl
     };
