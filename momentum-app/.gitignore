@@ -43,3 +43,6 @@ yarn-error.*
 .env
 functions/node_modules/
 functions/lib/
+
+# secrets
+.env
