@@ -16,6 +16,7 @@
   let wasShown = false;           // true after first render: skip the entrance animation on data re-renders
 
   const isDesk = () => { try { return matchMedia('(min-width: 1024px)').matches; } catch (e) { return false; } };
+  const isWide = () => { try { return matchMedia('(min-width: 768px)').matches; } catch (e) { return false; } };   // tablet+: chart weight card
   const fin = v => typeof v === 'number' && isFinite(v);
   const nb = s => String(s).replace(/ /g, ' ');            // keep "1,981 kcal" together
   const unitSpan = u => '<span class="today-u">' + esc(u) + '</span>';
@@ -159,7 +160,7 @@
       { label: 'To goal', n: a.goalReached ? '0' : M.units.abs(a.remaining), u: u + ' · ' + pct + '% done' }
     ];
     return '<section class="card today-card today-weight desk" aria-labelledby="today-wt-t">' +
-      '<div class="today-wd-head"><div class="ch-text"><h2 class="card-title today-wd-title" id="today-wt-t">' + esc(title) + '</h2>' +
+      '<div class="today-wd-head"><div class="ch-text"><h2 class="card-title today-wd-title" id="today-wt-t">' + esc(title).replace(/(\d) (lb|kg)\b/g, '$1\u00a0$2').replace(/([A-Z][a-z]{2}) (\d{1,2}), (\d{4})/g, '$1\u00a0$2,\u00a0$3') + '</h2>' +
       '<p class="card-sub">' + subParts.join(' · ') + '</p></div><div data-slot="range"></div></div>' +
       '<div class="today-wchart" data-slot="wchart"></div>' +
       '<div class="legend today-wlegend"><span class="legend-item"><span class="dot line" style="background:var(--d-trend)"></span><span>Trend</span></span>' +
@@ -439,7 +440,7 @@
       killCharts();
       const S = M.state, p = S.profile || {};
       const b = M.data.balance(), ta = M.data.todayActions(), a = M.data.analysis(), pl = M.data.plan(), da = M.data.deficits(7);
-      const desk = isDesk();
+      const desk = isDesk(), wide = isWide();
       const fresh = M.data.headlines() || [];
       if (fresh.map(h => h.text).join('|') !== hlList.map(h => h.text).join('|')) { hlList = fresh; if (hlIndex >= hlList.length) hlIndex = 0; }
       const name = (p.name || '').trim();
@@ -449,7 +450,7 @@
       el.innerHTML = '<div class="view today-view' + (wasShown ? ' today-still' : '') + '">' + head +
         '<div class="today-grid">' +
         '<div class="today-a-energy">' + energyCard(b) + '</div>' +
-        '<div class="today-a-weight">' + weightCard(a, pl, desk) + '</div>' +
+        '<div class="today-a-weight">' + weightCard(a, pl, wide) + '</div>' +
         '<div class="today-a-plan">' + planChecklist(b, ta, p) + '</div>' +
         '<div class="today-a-deficit">' + deficitCard(da, b) + '</div>' +
         (desk ? '<div class="today-a-burn">' + burnCard(b) + '</div>' : '') +
@@ -483,9 +484,9 @@
       // re-render when crossing the desktop breakpoint (layout differs)
       if (!mq) {
         try {
-          mq = matchMedia('(min-width: 1024px)');
+          mq = [matchMedia('(min-width: 1024px)'), matchMedia('(min-width: 768px)')];
           mqHandler = () => { if (document.querySelector('.today-view')) M.render(); };
-          mq.addEventListener('change', mqHandler);
+          mq.forEach(q => q.addEventListener('change', mqHandler));
         } catch (e) { mq = null; }
       }
     },
@@ -493,7 +494,7 @@
       wasShown = false;
       killCharts();
       if (hlTimer) { clearInterval(hlTimer); hlTimer = null; }
-      if (mq && mqHandler) { try { mq.removeEventListener('change', mqHandler); } catch (e) {} }
+      if (mq && mqHandler) { try { mq.forEach(q => q.removeEventListener('change', mqHandler)); } catch (e) {} }
       mq = null; mqHandler = null;
     }
   };

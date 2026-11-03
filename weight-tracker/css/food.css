@@ -265,3 +265,7 @@
 .food-rev-removed { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: 4px 4px 4px 16px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); min-width: 0; }
 .food-rev-removed > span { min-width: 0; overflow-wrap: anywhere; }
 .food-rev-removed .link-btn { flex: none; }
+
+/* ---- visual QA pass: 44px hit areas without changing the visual rhythm ---- */
+.food-rev-name-btn { min-height: 44px; margin: -6px 0; }
+.food-rev-name { min-height: 44px; }

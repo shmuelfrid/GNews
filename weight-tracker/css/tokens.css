@@ -8,6 +8,7 @@
   --elevated: #FFFFFF;
   --line: #E7E9EF;
   --line-strong: #D9DCE5;
+  --seg-on: #FFFFFF;           /* selected segment: lifts above its track */
   --scrim: rgba(18, 20, 28, .42);
   /* text */
   --ink: #12141C;
@@ -92,7 +93,7 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --bg: #0E1018; --surface: #161925; --surface-2: #1E2230; --elevated: #232838;
-    --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.14); --scrim: rgba(4,5,10,.62);
+    --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.14); --seg-on: #343A4E; --scrim: rgba(4,5,10,.62);
     --ink: rgba(255,255,255,.92); --ink-2: rgba(255,255,255,.70); --muted: rgba(255,255,255,.58);
     --brand: #8B87FF; --brand-hover: #A3A0FF; --brand-tint: rgba(139,135,255,.14); --on-brand: #0E1018;
     --teal: #2DD4BF; --teal-fill: #2DD4BF; --teal-tint: rgba(45,212,191,.12);
@@ -108,7 +109,7 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0E1018; --surface: #161925; --surface-2: #1E2230; --elevated: #232838;
-  --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.14); --scrim: rgba(4,5,10,.62);
+  --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.14); --seg-on: #343A4E; --scrim: rgba(4,5,10,.62);
   --ink: rgba(255,255,255,.92); --ink-2: rgba(255,255,255,.70); --muted: rgba(255,255,255,.58);
   --brand: #8B87FF; --brand-hover: #A3A0FF; --brand-tint: rgba(139,135,255,.14); --on-brand: #0E1018;
   --teal: #2DD4BF; --teal-fill: #2DD4BF; --teal-tint: rgba(45,212,191,.12);

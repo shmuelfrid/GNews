@@ -26,13 +26,13 @@
     const toU = kg => unit === 'lb' ? kg / LB : kg;
     let cur = null;
     try { if (M.store.allWeights().length) cur = M.data.currentKg(); } catch (e) {}
-    if (!isFinite(cur)) cur = isFinite(p.startKg) ? p.startKg : null;
-    const fi = isFinite(p.heightCm) ? M.units.cmToFtIn(p.heightCm) : null;
+    if (!Number.isFinite(cur)) cur = Number.isFinite(p.startKg) ? p.startKg : null;
+    const fi = Number.isFinite(p.heightCm) ? M.units.cmToFtIn(p.heightCm) : null;
     return {
       step: 1, unit, name: p.name || '', sex: p.sex === 'female' || p.sex === 'male' ? p.sex : '',
-      age: isFinite(p.birthYear) ? String(YEAR() - p.birthYear) : '',
-      ft: fi ? String(fi.ft) : '', inch: fi ? String(fi.inch) : '', cm: isFinite(p.heightCm) ? String(Math.round(p.heightCm)) : '',
-      weight: isFinite(cur) ? fmt1(toU(cur)) : '', goal: isFinite(p.goalKg) ? fmt1(toU(p.goalKg)) : '',
+      age: Number.isFinite(p.birthYear) ? String(YEAR() - p.birthYear) : '',
+      ft: fi ? String(fi.ft) : '', inch: fi ? String(fi.inch) : '', cm: Number.isFinite(p.heightCm) ? String(Math.round(p.heightCm)) : '',
+      weight: Number.isFinite(cur) ? fmt1(toU(cur)) : '', goal: Number.isFinite(p.goalKg) ? fmt1(toU(p.goalKg)) : '',
       weightEdited: false,
       mode: U.isValidKey(p.targetDate) && p.targetDate > U.todayKey() ? 'date' : 'pace',
       date: U.isValidKey(p.targetDate) && p.targetDate > U.todayKey() ? p.targetDate : '',
@@ -258,7 +258,7 @@
           const labels = { relaxed: 'Gentle and easy to keep up', steady: 'The sweet spot for most people', ambitious: 'Faster, needs more discipline' };
           slot('paces').innerHTML = scen.map(s =>
             '<button type="button" role="radio" class="ob-pace" aria-checked="' + (s.id === d.pace) + '" data-pace="' + s.id + '">' +
-            '<span class="ob-pace-main"><span class="ob-pace-t">' + esc(s.label) + ' · ' + fmt1(M.units.to(s.kgPerWeek, d.unit)) + ' ' + d.unit + '/week</span>' +
+            '<span class="ob-pace-main"><span class="ob-pace-t">' + esc(s.label) + ' <span class="ob-pace-r">· ' + fmt1(M.units.to(s.kgPerWeek, d.unit)) + ' ' + d.unit + '/week</span></span>' +
             '<span class="ob-pace-s">' + esc(labels[s.id]) + '</span></span>' +
             '<span class="ob-pace-end"><span class="ob-pace-d">' + esc(U.fmtDateY(s.date)) + '</span>' + (s.safe ? '' : '<span class="badge warn">Too fast</span>') + '</span></button>').join('') ||
             '<p class="hint">Enter your weights first.</p>';

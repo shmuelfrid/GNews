@@ -349,7 +349,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
 }
 .seg-btn:hover { color: var(--ink); }
-.seg-btn[aria-pressed="true"], .seg-btn[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1), 0 0 0 1px var(--line); }
+.seg-btn[aria-pressed="true"], .seg-btn[aria-selected="true"] { background: var(--seg-on); color: var(--ink); box-shadow: var(--sh-1), 0 0 0 1px var(--line); }
 .seg.lg .seg-btn { min-height: 44px; font-size: 15px; }
 
 /* ============ forms ============ */
@@ -594,3 +594,17 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
   .confetti { display: none; }
 }
+
+/* ---- visual QA: 44px touch targets on touch devices (desktop keeps the compact 36px controls) ---- */
+@media (pointer: coarse) {
+  .seg-btn, .seg > .seg-btn.seg-btn, .btn-sm, .chip { min-height: 44px; }
+  .seg { padding: 3px; }
+}
+.brandmark { min-height: 44px; }
+.side-add .ic { flex: none; width: 22px; height: 22px; min-width: 22px; }
+@media (min-width: 1024px) and (max-width: 1199px) { .side-foot .side-label { display: none; } }
+/* sheet bodies scroll; their children must never be squashed to fit (overflow:hidden children lose min-height:auto) */
+.sheet-body > * { flex-shrink: 0; }
+/* confirm: equal-width actions side by side; they stack full-width when space runs out */
+.dialog-actions .btn { flex: 1 1 140px; }
+.seg.block .seg-btn { padding: 0 8px; }

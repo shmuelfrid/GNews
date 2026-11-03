@@ -240,11 +240,11 @@
       const diff = act - exp;
       let note;
       if (Math.abs(diff) < 0.25) note = 'Your scale is tracking your food and activity log closely. That is a sign your logging is accurate.';
-      else if (diff * dir > 0) note = 'The scale moved more than your deficit explains. Part of that is water and food weight, so expect some of it to come back and even out.';
-      else note = 'The scale is lagging your deficit. Water, salt and a heavier workout can hide fat loss for a week or two; the fat loss is still happening.';
+      else if (diff * dir > 0) note = 'The scale moved more than your ' + (losing ? 'deficit' : 'surplus') + ' explains. Part of that is water and food weight, so expect some of it to come back and even out.';
+      else note = losing ? 'The scale is lagging your deficit. Water, salt and a heavier workout can hide fat loss for a week or two; the fat loss is still happening.' : 'The scale is lagging your surplus. Daily water swings can hide a gain for a week or two; keep eating to your target.';
       compare = '<div class="prog-compare">' +
         '<div class="prog-compare-grid">' +
-        '<div class="prog-cmp"><p class="prog-cmp-l">Expected from deficit</p><p class="prog-cmp-v">' + v(M.units.signed(exp), u) + '</p></div>' +
+        '<div class="prog-cmp"><p class="prog-cmp-l">Expected from ' + (losing ? 'deficit' : 'surplus') + '</p><p class="prog-cmp-v">' + v(M.units.signed(exp), u) + '</p></div>' +
         '<div class="prog-cmp"><p class="prog-cmp-l">Scale trend, ' + n + ' days</p><p class="prog-cmp-v">' + v(M.units.signed(act), u) + '</p></div>' +
         '</div><p class="prog-cmp-note">' + M.icon('info', 'sm') + '<span>' + esc(note) + '</span></p></div>';
     }
@@ -298,15 +298,16 @@
       tiles.push({ label: a.dir < 0 ? 'Total lost' : 'Total gained', value: tc > 0 ? M.units.abs(a.totalChange) : '0.0', unit: u, cap: Math.round(a.progress * 100) + '% of your goal' });
     }
     if (fin(a.paceAll)) tiles.push({ label: 'Avg per week', value: M.units.signed(a.paceAll), unit: u, cap: fin(a.pace4) ? 'Last 4 wks ' + M.units.signed(a.pace4) : 'Since ' + dateS(a.startK) });
-    if (fin(da30.avg)) tiles.push({ label: 'Avg daily deficit', value: U.int(da30.avg), unit: 'kcal', cap: da30.today && da30.today.target > 0 ? 'Goal ' + U.int(da30.today.target) : 'Last 30 days', tone: da30.today && da30.today.target > 0 && da30.avg >= da30.today.target ? 'good' : '' });
+    if (fin(da30.avg) && da30.gain) tiles.push({ label: da30.avg <= 0 ? 'Avg daily surplus' : 'Avg daily deficit', value: U.int(Math.abs(da30.avg)), unit: 'kcal', cap: da30.today && da30.today.target < 0 ? 'Goal +' + U.int(-da30.today.target) : 'Last 30 days', tone: da30.today && da30.today.target < 0 && -da30.avg >= -da30.today.target ? 'good' : '' });
+    else if (fin(da30.avg)) tiles.push({ label: 'Avg daily deficit', value: U.int(da30.avg), unit: 'kcal', cap: da30.today && da30.today.target > 0 ? 'Goal ' + U.int(da30.today.target) : 'Last 30 days', tone: da30.today && da30.today.target > 0 && da30.avg >= da30.today.target ? 'good' : '' });
     if (a.goalReached) tiles.push({ label: 'Goal', value: 'Reached', unit: '', cap: 'Nice work', tone: 'good' });
     else if (a.projKey) {
       let cap = 'At your 4-week pace', tone = '';
       if (a.scheduleDays != null) { if (a.scheduleDays >= 7) { cap = weeksWord(a.scheduleDays) + ' early'; tone = 'good'; } else if (a.scheduleDays <= -7) { cap = weeksWord(a.scheduleDays) + ' late'; tone = 'warn'; } else cap = 'Right on time'; }
-      tiles.push({ label: 'Goal ETA', value: U.fmtDateY(a.projKey), unit: '', cap, tone });
+      tiles.push({ label: 'Goal ETA', value: U.fmtDate(a.projKey), unit: a.projKey.slice(0, 4) !== U.todayKey().slice(0, 4) ? a.projKey.slice(0, 4) : '', cap, tone });
     }
     if (a.series.length) tiles.push({ label: 'Logging streak', value: String(a.streak), unit: a.streak === 1 ? 'day' : 'days', cap: a.longest > a.streak ? 'Best ' + a.longest + ' days' : a.streak >= 3 ? 'Your best yet' : 'Log daily to build it' });
-    if (da30.completedCount >= 2) tiles.push({ label: 'Under budget', value: da30.underCount + '/' + da30.completedCount, unit: 'days', cap: 'Last 30 days' });
+    if (da30.completedCount >= 2) tiles.push({ label: da30.gain ? 'On target' : 'Under budget', value: da30.underCount + '/' + da30.completedCount, unit: 'days', cap: 'Last 30 days' });
     if (a.bestWeek && a.dataWeeks.length >= 2) tiles.push({ label: 'Best week', value: M.units.signed(a.bestWeek.change), unit: u, cap: 'Week of ' + U.fmtDate(a.bestWeek.start) });
     if (a.extreme && a.series.length >= 3) tiles.push({ label: a.dir < 0 ? 'Lowest' : 'Highest', value: M.units.n(a.extreme.kg), unit: u, cap: U.relDay(U.keyOf(a.extreme.t)) });
     if (tiles.length < 2) return '';

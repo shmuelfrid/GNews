@@ -104,6 +104,9 @@
     return vals.length ? mean(vals) : null;
   }
 
+  /** typical active kcal per onboarding activity baseline (used until real activity data exists) */
+  const BASELINE_ACTIVE = { low: 200, some: 350, high: 550 };
+
   /* ---------------- activity equivalents ---------------- */
   const MET = { treadmill: 6.0, walk: 4.3, run: 9.8 };
   const kcalPerMin = (met, kg) => fin(kg) ? met * 3.5 * kg / 200 : 0;
@@ -217,19 +220,22 @@
     const isToday = key === today, isPast = key < today, isFuture = key > today;
     const act = activeFor(day, kg);
     const avg7 = avgActive(days, key, kg, 7);
+    // no activity history yet: fall back to the onboarding "how active is a normal day" guess so day one's budget matches the plan preview
+    const baseAct = avg7 == null && profile ? BASELINE_ACTIVE[profile.activityBaseline] : undefined;
+    const typAct = avg7 != null ? avg7 : fin(baseAct) ? baseAct : null;
     const work = workoutsFor(day);
     const eat = eatenFor(day);
     const resting = Math.round(bmrDay * frac);
-    const activeExpected = isPast ? act.kcal : isToday ? Math.max(act.kcal, avg7 || 0) : (avg7 || 0);
+    const activeExpected = isPast ? act.kcal : isToday ? Math.max(act.kcal, typAct || 0) : (typAct || 0);
     const burnSoFar = Math.round(resting + (isFuture ? 0 : act.kcal) + (isFuture ? 0 : work.kcal));
     const burnExpected = Math.round(bmrDay + activeExpected + work.kcal);
-    const pl = plan(profile, { currentKg: kg, now, typicalBurn: bmrDay + (avg7 != null ? avg7 : act.kcal) });
+    const pl = plan(profile, { currentKg: kg, now, typicalBurn: bmrDay + (typAct != null ? Math.max(typAct, avg7 != null ? 0 : act.kcal) : act.kcal) });
     const budget = Math.round(burnExpected - pl.targetDeficit);
     const left = Math.round(budget - eat.kcal);
     return {
       key, isToday, isPast, isFuture, kg, fraction: frac,
       bmr: bmrDay, resting, restingFull: bmrDay,
-      active: act.kcal, activeSource: act.source, activeEstimated: act.estimated, steps: act.steps, activeAvg7: avg7 != null ? Math.round(avg7) : null, activeExpected: Math.round(activeExpected),
+      active: act.kcal, activeSource: act.source, activeEstimated: act.estimated, steps: act.steps, activeAvg7: avg7 != null ? Math.round(avg7) : null, activeFromBaseline: avg7 == null && fin(baseAct), activeExpected: Math.round(activeExpected),
       workouts: work.kcal, workoutsExcluded: work.excludedKcal, workoutCount: work.count,
       burnSoFar, burnExpected,
       eaten: Math.round(eat.kcal), protein: eat.protein, carbs: eat.carbs, fat: eat.fat, foodCount: eat.count,
@@ -453,7 +459,7 @@
   }
 
   M.calc = {
-    KCAL_PER_KG, LB, MET, WORKOUT_TYPES,
+    KCAL_PER_KG, LB, MET, WORKOUT_TYPES, BASELINE_ACTIVE,
     keyOf, fromKey, addDays, diffDays, weekStartKey, isValidKey,
     age, bmr, bmrFor, dayFraction, bmrSoFar,
     dailyWeights, trendAt, currentKg,

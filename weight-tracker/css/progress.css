@@ -231,3 +231,7 @@
   .plan-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s-6); align-items: start; }
   .plan-col { display: flex; flex-direction: column; gap: var(--s-6); min-width: 0; }
 }
+
+/* ---- visual QA pass ---- */
+.plan-safe { max-width: 100%; height: auto; white-space: normal; text-align: center; padding-top: 8px; padding-bottom: 8px; line-height: 1.3; }
+.plan-safe .btn-label { overflow: visible; text-overflow: clip; white-space: normal; }

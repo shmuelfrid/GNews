@@ -133,10 +133,15 @@
   function heroHTML(b, key, isToday) {
     const hasBudget = fin(b.budget) && b.budget > 0;
     const left = fin(b.left) ? b.left : 0;
-    const over = hasBudget && left < 0;
+    const gain = !!b.gain;                       // gain goal: the budget is a minimum to reach
+    const over = hasBudget && left < 0 && !gain;
     const dayWord = isToday ? 'today' : 'on ' + U.relDay(key);
     let over_ = '', num = '', unit = '';
     if (!hasBudget) { over_ = 'Eaten ' + dayWord; num = U.int(b.eaten); unit = 'kcal'; }
+    else if (gain) {
+      if (left <= 0) { over_ = 'Target reached ' + dayWord; num = U.int(-left); unit = 'kcal above target'; }
+      else { over_ = isToday ? 'Left to eat today' : 'Short of target ' + dayWord; num = U.int(left); unit = isToday ? 'kcal to go' : 'kcal short'; }
+    }
     else if (over) { over_ = 'Over budget ' + dayWord; num = U.int(-left); unit = 'kcal over'; }
     else if (isToday) { over_ = 'Left to eat today'; num = U.int(left); unit = 'kcal left'; }
     else { over_ = 'Under budget ' + dayWord; num = U.int(left); unit = 'kcal under'; }
@@ -147,7 +152,7 @@
       '<p class="food-hero-num"><span class="food-hero-n">' + num + '</span><span class="food-hero-u">' + esc(unit) + '</span></p></div>';
     if (hasBudget) {
       h += '<div class="food-hero-bar">' + ui.progress(over ? 1 : frac, over ? 'amber' : null, 'Calories eaten of daily budget') +
-        '<div class="food-hero-meta"><span class="nowrap"><b>' + U.int(b.eaten) + '</b> eaten</span><span class="nowrap">of <b>' + U.int(b.budget) + '</b> budget</span></div></div>';
+        '<div class="food-hero-meta"><span class="nowrap"><b>' + U.int(b.eaten) + '</b> eaten</span><span class="nowrap">of <b>' + U.int(b.budget) + '</b> ' + (gain ? 'target' : 'budget') + '</span></div></div>';
       const burnWord = isToday ? 'expected burn' : 'burned';
       if (fin(b.burnExpected) && fin(b.targetDeficit)) {
         const tgt = b.targetDeficit;
@@ -274,10 +279,10 @@
       let weekHTML = '';
       if (week) {
         const comp = week.completedCount;
-        const title = comp >= 1 ? 'Under budget ' + week.underCount + ' of the last ' + U.plural(comp, 'day') : 'Your eating this week';
+        const title = comp >= 1 ? (week.gain ? 'Hit your calorie target ' : 'Under budget ') + week.underCount + ' of the last ' + U.plural(comp, 'day') : 'Your eating this week';
         const sub = comp >= 1 && fin(week.total) ? (week.total >= 0 ? U.int(week.total) + ' kcal saved' + (week.total >= 1000 ? ' ≈ ' + M.units.abs(week.total / M.calc.KCAL_PER_KG) + ' ' + M.units.unit + ' of fat' : '') : U.int(-week.total) + ' kcal over in total') : 'Each bar is what you ate that day';
         weekHTML = '<section class="card food-week" aria-labelledby="food-week-t"><div class="card-head"><div class="ch-text"><h2 class="chart-title" id="food-week-t">' + esc(title) + '</h2><p class="card-sub">' + esc(sub) + '</p></div></div>' +
-          '<div class="food-week-chart"></div><div class="legend"><span class="legend-item"><span class="dot eaten sq"></span>Within that day’s budget</span><span class="legend-item"><span class="dot surplus sq"></span>Over budget</span></div></section>';
+          '<div class="food-week-chart"></div>' + (week.gain ? '' : '<div class="legend"><span class="legend-item"><span class="dot eaten sq"></span>Within that day’s budget</span><span class="legend-item"><span class="dot surplus sq"></span>Over budget</span></div>') + '</section>';
       }
 
       el.innerHTML = '<div class="view food-view">' + head +
@@ -293,7 +298,7 @@
           bars: week.days.map(d => ({
             label: d.key === today ? 'Today' : U.fmtDate(d.key, { weekday: 'short' }),
             value: d.logged ? d.eaten : 0,
-            color: d.logged && d.eaten > d.budget ? overC : eatenC,
+            color: d.logged && !week.gain && d.eaten > d.budget ? overC : eatenC,
             muted: d.partial, highlight: d.key === key
           })),
           valueFmt: U.int, labels: 'auto',

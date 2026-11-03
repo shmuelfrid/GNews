@@ -66,7 +66,7 @@
 .today-wmeta > span { white-space: nowrap; }
 .today-weight .progress { height: 8px; }
 
-.today-hl { display: flex; align-items: center; gap: 12px; min-width: 0; border-radius: 12px; cursor: default; }
+.today-hl { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 44px; border-radius: 12px; cursor: default; }
 .today-hl[role="button"] { cursor: pointer; }
 .today-hl-ic { width: 40px; height: 40px; border-radius: var(--r-pill); }
 .today-hl-text { flex: 1 1 auto; min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--ink-2); text-wrap: pretty; transition: opacity 180ms ease, transform 180ms ease; }
@@ -77,9 +77,10 @@
 .today-hl-dots i.on { background: var(--teal-fill); }
 
 /* desktop weight card */
-.today-wd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); min-width: 0; }
+.today-wd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3) var(--s-4); min-width: 0; flex-wrap: wrap; }
+.today-wd-head > .ch-text { flex: 1 1 300px; }
 .today-wd-head .ch-text { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.today-wd-title { font-size: var(--fs-h2); font-weight: 700; letter-spacing: -.01em; }
+.today-wd-title { font-size: var(--fs-h2); font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
 .today-wd-head .card-sub b { color: var(--ink); font-weight: 700; white-space: nowrap; }
 .today-wd-head > div:last-child { flex: none; }
 .today-wchart { min-height: 240px; }
@@ -154,11 +155,13 @@ span.today-check { border-radius: 50%; display: grid; place-items: center; }
 .today-total-v { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .today-total-v b { color: var(--ink); font-size: 16px; }
 
-/* ---------- responsive grid ---------- */
+/* ---------- responsive grid ----------
+   phones: one column · tablets (768–1023): energy + weight full width, then pairs
+   laptops (1024–1399): two columns · wide (1400+): the 12-col artboard layout with three cards per row */
 @media (min-width: 768px) {
   .today-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas: "energy weight" "plan deficit" "planlink planlink" "meals weighins";
+    grid-template-areas: "energy energy" "weight weight" "plan deficit" "planlink planlink" "meals weighins";
   }
   .today-a-energy { grid-area: energy; } .today-a-weight { grid-area: weight; }
   .today-a-plan { grid-area: plan; } .today-a-deficit { grid-area: deficit; }
@@ -166,18 +169,37 @@ span.today-check { border-radius: 50%; display: grid; place-items: center; }
   .today-a-meals { grid-area: meals; } .today-a-weighins { grid-area: weighins; }
 }
 @media (min-width: 1024px) {
-  .today-grid { grid-template-areas: "energy weight" "plan deficit" "meals weighins"; }
+  .today-grid { grid-template-areas: "energy weight" "plan deficit" "meals burn" "meals weighins"; gap: var(--s-6); }
   .today-view { gap: var(--s-8); }
+  .today-a-meals { align-self: start; }
 }
-@media (min-width: 1200px) {
+@media (min-width: 1400px) {
+  .today-a-meals { align-self: stretch; }
   .today-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-template-areas:
       "energy energy energy energy energy weight weight weight weight weight weight weight"
       "plan plan plan plan deficit deficit deficit deficit burn burn burn burn"
       "meals meals meals meals meals meals weighins weighins weighins weighins weighins weighins";
-    gap: var(--s-6);
   }
+}
+/* energy card: ring beside the figures whenever the card is wide enough */
+.today-a-energy { container: today-e / inline-size; }
+@container today-e (min-width: 420px) {
+  .today-energy { display: grid; grid-template-columns: 176px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-auto-rows: auto; column-gap: var(--s-8); row-gap: var(--s-5); align-content: stretch; }
+  .today-energy > .today-eb-head, .today-energy > .today-foot, .today-energy > .today-note, .today-energy > .today-goalline { grid-column: 1 / -1; }
+  .today-energy > .today-ring { margin: 0; align-self: center; }
+  .today-energy > .today-figs { grid-template-columns: minmax(0, 1fr); align-self: center; gap: var(--s-4); margin: 0; }
+  .today-energy .today-fig { text-align: left; padding: 0; }
+  .today-energy .today-fig + .today-fig { border-left: 0; }
+  .today-energy .today-fig dt { justify-content: flex-start; font-size: 13px; }
+  .today-energy .today-fig dd { margin-top: 2px; }
+  .today-energy .today-fig-n { font-size: 26px; line-height: 32px; }
+  .today-energy .today-foot { text-align: left; }
+}
+@container today-e (min-width: 640px) {
+  .today-energy { grid-template-columns: 176px minmax(0, 1fr); }
+  .today-energy > .today-figs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 .today-wi-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
 .today-weighins .row-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -185,12 +207,11 @@ span.today-check { border-radius: 50%; display: grid; place-items: center; }
 .today-goalline .ic { color: var(--teal); margin-top: 2px; }
 .today-goalline b { color: var(--ink); font-weight: 700; }
 .today-goalline > span { min-width: 0; text-wrap: pretty; }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .today-goalline { display: flex; }
   .today-energy { justify-content: space-between; }
 }
 .today-still, .ob-still, .profile-still { animation: none; }
-@media (min-width: 1024px) and (max-width: 1199px) { .today-a-burn { display: none !important; } }
 .today-def-empty { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-2); font-size: 14px; line-height: 1.5; }
 .today-def-empty .ic { color: var(--teal); margin-top: 1px; }
 .today-def-empty p { min-width: 0; text-wrap: pretty; }
@@ -332,3 +353,4 @@ span.today-check { border-radius: 50%; display: grid; place-items: center; }
 @media (max-width: 479px) { .profile-theme > div { flex: 1 1 100%; } .profile-theme .seg { display: grid; width: 100%; } }
 .today-wstat-na { color: var(--muted); }
 .today-energy .notice.today-note { text-align: left; }
+.ob-pace-r { white-space: nowrap; }

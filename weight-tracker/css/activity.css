@@ -248,3 +248,5 @@
 .act-wo-end { flex-direction: row; align-items: center; gap: 10px; padding-top: 0; min-height: 44px; }
 .act-wo-edit { width: 16px; height: 16px; }
 .act-wos .card-head { align-items: center; }
+.act-photo-t .link-btn { min-height: 44px; margin-top: -4px; margin-bottom: -4px; }
+@media (max-width: 479px) { .act-wo-edit { display: none; } }

@@ -344,7 +344,7 @@
         ? M.units.abs(P.kgPerWeek) + ' ' + u + ' a week is more than 1% of your body weight (' + max + ' ' + u + '). Losing faster than that costs muscle and is hard to keep up.'
         : 'That means eating ' + U.int(P.budget) + ' kcal a day, below the ' + U.int(P.minKcal) + ' kcal minimum we recommend' + (m.p.sex === 'female' ? ' for women.' : ' for men.');
       warn = '<div class="notice warn plan-warn" role="note">' + M.icon('alert') + '<div><p>' + esc(txt) + '</p>' +
-        (P.safeDate ? '<button type="button" class="btn btn-outline btn-sm plan-safe" data-safe="' + esc(P.safeDate) + '"><span class="btn-label">Use a safer date: ' + esc(dateS(P.safeDate)) + '</span></button>' : '') + '</div></div>';
+        (P.safeDate ? '<button type="button" class="btn btn-outline btn-sm plan-safe" data-safe="' + esc(P.safeDate) + '"><span class="btn-label">Use a safer date: <span class="nowrap">' + esc(dateS(P.safeDate)) + '</span></span></button>' : '') + '</div></div>';
     }
     return '<div class="card-head"><div class="ch-text"><h2 class="card-title" id="plan-pace">Choose your pace</h2><p class="card-sub">Tap a pace, or set your own date below</p></div></div>' +
       scen + warn;
