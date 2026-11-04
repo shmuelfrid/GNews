@@ -1,6 +1,3 @@
-/* OWNER: food builder — replace this placeholder (see CONTRACT.md). */
-import { PlaceholderScreen } from '@/features/placeholder/Placeholder';
+import { FoodScreen } from '@/features/food/FoodScreen';
 
-export default function FoodScreen() {
-  return <PlaceholderScreen title="Food" icon="food" tabs />;
-}
+export default function Food() { return <FoodScreen />; }

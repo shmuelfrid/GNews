@@ -1,6 +1,3 @@
-/* OWNER: bmi builder — replace this placeholder (see CONTRACT.md). Stack route with native header. */
-import { PlaceholderScreen } from '@/features/placeholder/Placeholder';
+import { BmiScreen } from '@/features/bmi/BmiScreen';
 
-export default function BmiScreen() {
-  return <PlaceholderScreen title="Bmi" icon="scale" safeTop={false} />;
-}
+export default function Bmi() { return <BmiScreen />; }

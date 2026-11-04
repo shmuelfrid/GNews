@@ -1,6 +1,5 @@
-/* OWNER: today builder — replace this placeholder (see CONTRACT.md). */
-import { PlaceholderScreen } from '@/features/placeholder/Placeholder';
+import { TodayScreen } from '@/features/today/TodayScreen';
 
-export default function TodayScreen() {
-  return <PlaceholderScreen title="Today" icon="today" tabs />;
+export default function Today() {
+  return <TodayScreen />;
 }

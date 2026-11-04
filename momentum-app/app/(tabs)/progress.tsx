@@ -1,6 +1,3 @@
-/* OWNER: progress builder — replace this placeholder (see CONTRACT.md). */
-import { PlaceholderScreen } from '@/features/placeholder/Placeholder';
+import { ProgressScreen } from '@/features/progress/ProgressScreen';
 
-export default function ProgressScreen() {
-  return <PlaceholderScreen title="Progress" icon="progress" tabs />;
-}
+export default function Progress() { return <ProgressScreen />; }

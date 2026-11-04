@@ -13,6 +13,7 @@ service cloud.firestore {
     function optStr(d, k, max) { return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= max); }
     function optList(d, k, max) { return !(k in d) || (d[k] is list && d[k].size() <= max); }
     function optMap(d, k) { return !(k in d) || d[k] is map; }
+    function optMapOrNull(d, k) { return !(k in d) || d[k] == null || d[k] is map; }
 
     function validProfile(d) {
       return d.keys().size() <= 60
@@ -30,7 +31,7 @@ service cloud.firestore {
         && optNum(d, 'stepGoal')
         && optNum(d, 'waistCm')
         && optList(d, 'celebrated', 200)
-        && optMap(d, 'activityBaseline');
+        && (optStr(d, 'activityBaseline', 16) || optMap(d, 'activityBaseline'));
     }
 
     function validDay(date, d) {
@@ -39,7 +40,7 @@ service cloud.firestore {
         && optList(d, 'weights', 50)
         && optList(d, 'foods', 200)
         && optList(d, 'workouts', 50)
-        && optMap(d, 'activity')
+        && optMapOrNull(d, 'activity')
         && optMap(d, 'planTicks');
     }
 

@@ -65,7 +65,7 @@ function Nav() {
   const navTheme = { ...base, colors: { ...base.colors, primary: t.c.brand, background: t.c.bg, card: t.c.bg, text: t.c.ink, border: t.c.line } };
   const stackHeader = {
     headerShown: true, headerShadowVisible: false, headerTintColor: t.c.brand, headerStyle: { backgroundColor: t.c.bg },
-    headerTitleStyle: { fontFamily: fonts[700], color: t.c.ink, fontSize: 17 }, headerBackButtonDisplayMode: 'minimal' as const,
+    headerTitleStyle: { fontFamily: fonts[700], color: t.c.ink, fontSize: 17 }, headerBackButtonDisplayMode: 'minimal' as const, headerBackTitle: 'Back',
   };
   const sheet = { presentation: 'transparentModal' as const, animation: 'fade' as const, headerShown: false, contentStyle: { backgroundColor: 'transparent' } };
   return (

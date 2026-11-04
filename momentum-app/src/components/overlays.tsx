@@ -1,7 +1,7 @@
 /* UI kit — overlays: SheetFrame/Sheet/ModalSheetScreen, toast() + ToastHost, confirm() + ConfirmHost, celebrate() + CelebrationHost. */
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { newlyCrossed } from '../lib/calc';
 import { derived, getState, store, subscribe } from '../lib/store';
@@ -37,11 +37,20 @@ export function SheetFrame({ title, sub, children, footer, onClose, scroll = tru
   const y = useRef(new Animated.Value(reduceMotion ? 0 : 1)).current;
   useEffect(() => { Animated.timing(y, { toValue: 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web' }).start(); }, [y]);
   const wide = width >= 700;
+  // keep the sheet (header + sticky footer) fully on screen above the keyboard: native windows don't resize under edge-to-edge
+  const [kb, setKb] = useState(0);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const ios = Platform.OS === 'ios';
+    const a = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', e => setKb(e.endCoordinates.height));
+    const b = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setKb(0));
+    return () => { a.remove(); b.remove(); };
+  }, []);
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: wide ? 'center' : 'flex-end' }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={{ flex: 1, justifyContent: wide ? 'center' : 'flex-end' }}>
       <Pressable onPress={onClose} accessibilityLabel="Close" accessibilityRole="button" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: t.c.scrim }} />
       <Animated.View accessibilityViewIsModal style={{
-        width: '100%', maxWidth, alignSelf: 'center', maxHeight: height - ins.top - (wide ? 48 : 12),
+        width: '100%', maxWidth, alignSelf: 'center', maxHeight: height - ins.top - (wide ? 48 : 12) - kb,
         backgroundColor: t.dark ? t.c.elevated : t.c.surface,
         borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: wide ? 24 : 0, borderBottomRightRadius: wide ? 24 : 0,
         ...t.shadow(3), transform: [{ translateY: y.interpolate({ inputRange: [0, 1], outputRange: [0, 420] }) }],
@@ -60,7 +69,7 @@ export function SheetFrame({ title, sub, children, footer, onClose, scroll = tru
           <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: footer ? 16 : 24 + ins.bottom, gap: 20 }}>{children}</ScrollView>
         ) : <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: footer ? 16 : 24 + ins.bottom, gap: 20, flexShrink: 1 }}>{children}</View>}
         {footer ? (
-          <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 + (wide ? 4 : ins.bottom), borderTopWidth: 1, borderTopColor: t.c.line }}>{footer}</View>
+          <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 + (wide || kb ? 4 : ins.bottom), borderTopWidth: 1, borderTopColor: t.c.line }}>{footer}</View>
         ) : null}
       </Animated.View>
     </KeyboardAvoidingView>

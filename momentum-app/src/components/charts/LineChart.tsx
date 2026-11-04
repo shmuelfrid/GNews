@@ -51,7 +51,7 @@ export function LineChart({ dots = [], line = [], goal, goalLabel, projection = 
     const ys = all.filter(p => p.key >= from && p.key <= to).map(p => p.y).concat(goal != null && isFinite(goal) ? [goal] : []);
     let lo = Math.min(...ys), hi = Math.max(...ys);
     if (!isFinite(lo)) return null;
-    const pad = Math.max((hi - lo) * 0.12, 0.6);
+    const pad = Math.max((hi - lo) * 0.07, 0.6);
     lo -= pad; hi += pad;
     const ticks = niceTicks(lo, hi, height < 200 ? 3 : 4);
     const yLabelW = Math.max(...ticks.map(v => yFmt(v).length)) * 7.4 + 10;

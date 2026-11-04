@@ -1,6 +1,3 @@
-/* OWNER: feature builder — replace this placeholder (see CONTRACT.md). Sheet-style modal route. */
-import { PlaceholderSheet } from '@/features/placeholder/Placeholder';
+import { AddFoodSheet } from '@/features/food/AddFoodSheet';
 
-export default function AddFoodScreen() {
-  return <PlaceholderSheet title="Add food" icon="food" />;
-}
+export default function AddFood() { return <AddFoodSheet />; }

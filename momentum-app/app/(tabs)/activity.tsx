@@ -1,6 +1,9 @@
-/* OWNER: activity builder — replace this placeholder (see CONTRACT.md). */
-import { PlaceholderScreen } from '@/features/placeholder/Placeholder';
+import { ActivityScreen } from '@/features/activity/ActivityScreen';
+import { startHealthAutoSync } from '@/features/activity/healthSync';
 
-export default function ActivityScreen() {
-  return <PlaceholderScreen title="Activity" icon="activity" tabs />;
+// Health Connect auto-sync on launch + app foreground (Android build only; no-op elsewhere).
+startHealthAutoSync();
+
+export default function ActivityTab() {
+  return <ActivityScreen />;
 }

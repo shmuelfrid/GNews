@@ -1,6 +1,5 @@
-/* OWNER: feature builder — replace this placeholder (see CONTRACT.md). Sheet-style modal route. */
-import { PlaceholderSheet } from '@/features/placeholder/Placeholder';
+import { AddWorkoutSheet } from '@/features/activity/AddWorkoutSheet';
 
 export default function AddWorkoutScreen() {
-  return <PlaceholderSheet title="Add workout" icon="dumbbell" />;
+  return <AddWorkoutSheet />;
 }

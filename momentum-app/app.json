@@ -62,7 +62,7 @@
         }
       ],
       "expo-document-picker",
-      "expo-health-connect",
+      "react-native-health-connect",
       [
         "expo-build-properties",
         {

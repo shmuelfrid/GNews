@@ -1,7 +1,7 @@
 /* UI kit — primitives: Txt, Icon, Screen, Card, SectionHeader, StatTile, ListRow, Badge, ProgressBar, EmptyState, Divider, Dot. */
 import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, type RefreshControlProps, type ScrollViewProps, type StyleProp, type TextStyle, type ViewStyle, Text, type TextProps } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type RefreshControlProps, type ScrollViewProps, type StyleProp, type TextStyle, type ViewStyle, Text, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, type Colors, type TypeVariant } from '../theme';
@@ -81,7 +81,10 @@ export function Screen({ children, tabs, header, maxWidth = 760, static: isStati
     <View style={{ flex: 1, backgroundColor: t.c.bg, paddingTop: safeTop ? ins.top : 0 }}>
       {header}
       {isStatic ? <View style={{ flex: 1, paddingTop: 12, paddingBottom: padBottom }}>{inner}</View> : (
-        <ScrollView {...rest} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: 12, paddingBottom: padBottom }} style={{ flex: 1 }}>{inner}</ScrollView>
+        // forms on stack screens (onboarding, plan, profile) stay above the keyboard; edge-to-edge Android no longer resizes the window
+        <KeyboardAvoidingView enabled={!tabs && Platform.OS !== 'web'} behavior="padding" style={{ flex: 1 }}>
+          <ScrollView {...rest} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: 12, paddingBottom: padBottom }} style={{ flex: 1 }}>{inner}</ScrollView>
+        </KeyboardAvoidingView>
       )}
     </View>
   );
@@ -170,7 +173,7 @@ export function Dot({ color, size = 8, square }: { color: string; size?: number;
 }
 export function Divider({ inset = 0 }: { inset?: number }) {
   const t = useTheme();
-  return <View style={{ height: StyleSheet.hairlineWidth * 2, backgroundColor: t.c.line, marginLeft: inset }} />;
+  return <View style={{ height: StyleSheet.hairlineWidth * 2, backgroundColor: t.c.line, marginLeft: inset, marginRight: inset }} />;
 }
 
 /* ---------------- StatTile ---------------- */
