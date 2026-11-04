@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Momentum photos: users/{uid}/photos/{yyyy-mm-dd}/{id}.jpg – owner only, images < 10 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/{allPaths=**} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

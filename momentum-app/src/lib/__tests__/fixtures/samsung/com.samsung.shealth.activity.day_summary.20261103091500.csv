@@ -1,0 +1,5 @@
+com.samsung.shealth.activity.day_summary,6302002,4
+day_time,step_count,calorie,active_time,distance,run_time,walk_time,create_time,datauuid
+1793404800000,3480,180,2400000,2650,0,0,2026-10-31 23:00:00.000,sum-0
+1793491200000,10050,485,3000000,7660,0,0,2026-11-01 23:00:00.000,sum-1
+1793577600000,12890,628,3600000,9820,0,0,2026-11-02 23:00:00.000,sum-2
