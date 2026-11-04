@@ -25,7 +25,7 @@ import { buildActivity, filterExport, round1, validateActivity, type ExportRange
 
 const fin = (v: unknown): v is number => typeof v === 'number' && isFinite(v);
 const numOrNull = (s: string) => { const v = parseNum(s); return fin(v) ? v : null; };
-const str = (v: number | null | undefined, d = 0) => (fin(v) ? String(d ? round1(v) : Math.round(v)) : '');
+const str = (v: number | null | undefined, d = 0) => (fin(v) ? String(d ? Math.round(v * 10 ** d) / 10 ** d : Math.round(v)) : '');
 type Mode = 'health-connect' | 'screenshot' | 'export' | 'manual';
 type FakeAi = (img: unknown) => Promise<HealthAiResult>;
 /** QA hook (web screenshots without Firebase): globalThis.__momentumHealthAiFake = async img => HealthAiResult */
@@ -116,7 +116,7 @@ export function HealthImportSheet() {
 
   const loadManual = (k: string) => {
     const a = store.getDay(k).activity;
-    setForm(a ? { steps: str(a.steps), activeKcal: str(a.activeKcal), totalKcal: str(a.totalKcal), activeMinutes: str(a.activeMinutes), distance: fin(a.distanceKm) ? str(u.distTo(a.distanceKm), 1) : '' } : emptyForm);
+    setForm(a ? { steps: str(a.steps), activeKcal: str(a.activeKcal), totalKcal: str(a.totalKcal), activeMinutes: str(a.activeMinutes), distance: fin(a.distanceKm) ? str(u.distTo(a.distanceKm), 2) : '' } : emptyForm);
     setErrs({});
   };
   useEffect(() => { if (mode === 'manual') loadManual(date); }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -170,7 +170,7 @@ export function HealthImportSheet() {
       if (k && isValidKey(k) && k <= today) setDate(k);
       setForm({
         steps: str(r.steps), activeKcal: str(r.active_kcal), totalKcal: str(r.total_kcal), activeMinutes: str(r.active_minutes),
-        distance: fin(r.distance_km) ? str(u.distTo(r.distance_km), 1) : '',
+        distance: fin(r.distance_km) ? str(u.distTo(r.distance_km), 2) : '',
       });
       setErrs({});
       setConfidence(r.confidence);

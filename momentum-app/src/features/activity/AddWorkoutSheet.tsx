@@ -23,7 +23,7 @@ import {
 
 const fin = (v: unknown): v is number => typeof v === 'number' && isFinite(v);
 const numOrNull = (s: string) => { const v = parseNum(s); return fin(v) ? v : null; };
-const str = (v: number | null | undefined, d = 0) => (fin(v) ? String(d ? round1(v) : Math.round(v)) : '');
+const str = (v: number | null | undefined, d = 0) => (fin(v) ? String(d ? Math.round(v * 10 ** d) / 10 ** d : Math.round(v)) : '');
 type FakeAi = (img: unknown) => Promise<WorkoutAiResult>;
 /** QA hook (web screenshots without Firebase): globalThis.__momentumWorkoutAiFake = async img => WorkoutAiResult */
 const fakeAi = (): FakeAi | undefined => (globalThis as { __momentumWorkoutAiFake?: FakeAi }).__momentumWorkoutAiFake;
@@ -100,7 +100,7 @@ export function AddWorkoutSheet() {
       const sp = splitNote(existing.note);
       Object.assign(base, {
         type: workoutType(existing.type).id, name: existing.name || '', date: keyOf(existing.t), time: hhmm(existing.t), minutes: str(existing.minutes),
-        kcal: str(existing.kcal), estimated: false, distance: fin(existing.distanceKm) ? str(u.distTo(existing.distanceKm), 1) : '',
+        kcal: str(existing.kcal), estimated: false, distance: fin(existing.distanceKm) ? str(u.distTo(existing.distanceKm), 2) : '',
         hr: str(existing.avgHr), note: sp.note, counted: !!existing.countedInSamsung, source: existing.source,
         speed: sp.speed != null ? String(sp.speed) : '', incline: sp.incline != null ? String(sp.incline) : '',
       });
@@ -161,7 +161,7 @@ export function AddWorkoutSheet() {
         type, source: 'photo', confidence: r.confidence,
         date: tOk ? keyOf(st) : s.date, time: tOk ? hhmm(st) : s.time,
         minutes: fin(r.duration_min) ? str(r.duration_min) : s.minutes,
-        distance: fin(r.distance_km) ? str(u.distTo(r.distance_km), 1) : '', hr: fin(r.avg_hr) ? str(r.avg_hr) : '',
+        distance: fin(r.distance_km) ? str(u.distTo(r.distance_km), 2) : '', hr: fin(r.avg_hr) ? str(r.avg_hr) : '',
         note: r.notes ? String(r.notes).slice(0, 200) : '',
       };
       if (fin(r.kcal)) { p.kcal = str(r.kcal); p.estimated = false; } else { p.estimated = true; }
